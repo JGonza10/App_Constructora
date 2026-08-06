@@ -6,7 +6,13 @@ const db = require('../db');
 const verificarToken = require('../middleware/auth');
 const verificarRol = require('../middleware/roles');
 
-const SECRET = process.env.JWT_SECRET || 'clave_secreta_constructora';
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    'Falta configurar JWT_SECRET en las variables de entorno. ' +
+    'Copia backend/.env.example a backend/.env y define un secreto propio antes de iniciar el servidor.'
+  );
+}
+const SECRET = process.env.JWT_SECRET;
 
 // POST /api/usuarios/registro  (solo admin puede crear usuarios)
 router.post('/registro', verificarToken, verificarRol('admin'), async (req, res) => {

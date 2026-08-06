@@ -4,7 +4,13 @@ const bcrypt  = require('bcrypt');
 const jwt     = require('jsonwebtoken');
 const db      = require('../db');
 
-const SECRET = process.env.JWT_SECRET || 'clave_secreta_constructora';
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    'Falta configurar JWT_SECRET en las variables de entorno. ' +
+    'Copia backend/.env.example a backend/.env y define un secreto propio antes de iniciar el servidor.'
+  );
+}
+const SECRET = process.env.JWT_SECRET;
 
 // Middleware propio: verifica token de tipo "cliente"
 function verificarClienteToken(req, res, next) {

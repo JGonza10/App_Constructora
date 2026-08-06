@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@babel/core": "^8.0.1",
-    "@babel/parser": "^8.0.0",
-    "@babel/preset-react": "^8.0.1",
     "axios": "^1.6.2",
     "chart.js": "^4.4.1",
     "react": "^18.2.0",

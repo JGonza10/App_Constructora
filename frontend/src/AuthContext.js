@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 // En producción, define REACT_APP_API_URL (ej: https://tu-backend.up.railway.app)
