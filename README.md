@@ -36,7 +36,11 @@ Aplicación web fullstack para administrar la operación de una empresa construc
 - **Backend**: Node.js + Express 4, MySQL2 (driver), Socket.io (tiempo real), JWT (`jsonwebtoken`) + bcrypt (autenticación), dotenv, ExcelJS y PDFKit (exportación). Servidor confirmado en `backend/server.js` y `backend/db.js`.
 - **Frontend**: React 18 + React Router v6, Axios, Socket.io-client, Chart.js (`react-chartjs-2`), React Toastify. Bootstrapeado con `react-scripts` (Create React App).
 - **Base de datos**: MySQL 8+ (esquema base en `database/constructora.sql` más dos migraciones incrementales).
-- **Despliegue previsto**: Railway (backend + MySQL) y Vercel (frontend) — hay un `Procfile` (`web: node server.js`) preparado para plataformas tipo Heroku/Railway.
+- **Despliegue**: todo en Railway — un proyecto (`app-constructora`) con 3 servicios: `constructora-backend`, `constructora-frontend` (sitio estático, build de React) y `MySQL`. Conectado al repo de GitHub para redeploy automático en cada push a `master`.
+
+**URLs en vivo:**
+- Frontend: https://constructora-frontend-production-7d81.up.railway.app
+- Backend / API: https://constructora-backend-production-2f24.up.railway.app
 
 ---
 

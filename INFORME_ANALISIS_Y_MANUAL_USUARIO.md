@@ -50,7 +50,11 @@ Se sustituyeron **todos** los datos de ejemplo (usuarios, clientes, obras, presu
 
 **Separación importante:** el portal del cliente **no** es "el sistema interno con permisos reducidos" — es un sistema de login y de datos completamente aparte (`clientes_acceso`, no `usuarios`), con su propio middleware de verificación de token (`verificarClienteToken` en `backend/routes/portal.js`) que exige `tipo: 'cliente'` dentro del JWT. Esto es una buena decisión de diseño: un cliente jamás podría, ni por error de programación en otra ruta, terminar con un token que lo deje pasar como empleado interno, porque son dos flujos de emisión de token distintos.
 
-**Despliegue previsto:** Railway para backend + MySQL, Vercel para el frontend — coincide con lo que recomienda tu proceso seguro para apps con backend/login/base de datos propia, así que no hay cambio de tecnología que sugerir ahí.
+**Despliegue:** todo en Railway — backend, frontend y MySQL como tres servicios del mismo proyecto (`app-constructora`), conectados al repo de GitHub para redeploy automático en cada push a `master`. Coincide con lo que recomienda tu proceso seguro para apps con backend/login/base de datos propia, así que no hay cambio de tecnología que sugerir ahí.
+
+**URLs en vivo (2026-08-21):**
+- Frontend: https://constructora-frontend-production-7d81.up.railway.app
+- Backend / API: https://constructora-backend-production-2f24.up.railway.app
 
 ---
 
@@ -274,8 +278,8 @@ En cualquiera de los dos logins (interno o portal), escribe una contraseña inco
 
 Antes de publicar esto con datos reales de clientes:
 
-- [ ] Definir `FRONTEND_URL` real en el backend (Railway) — no dejar CORS abierto a `*`.
-- [ ] Confirmar que tanto el backend (Railway) como el frontend (Vercel) sirven todo por HTTPS.
+- [x] Definir `FRONTEND_URL` real en el backend (Railway) — hecho, apunta a `https://constructora-frontend-production-7d81.up.railway.app`, CORS ya no está abierto a `*`.
+- [x] Confirmar que backend y frontend sirven todo por HTTPS — ambos en Railway, con dominio `*.up.railway.app` y TLS automático.
 - [ ] Cambiar `JWT_SECRET` y las contraseñas de MySQL a valores generados para producción (no reutilizar los de desarrollo local).
 - [ ] Cambiar las 5 contraseñas de ejemplo de este manual (o eliminar esas cuentas) antes de exponer el sistema a internet.
 - [ ] Decidir si migras el token de `localStorage` a cookies `HttpOnly` (sección 5.5) antes de manejar datos financieros reales de clientes.
