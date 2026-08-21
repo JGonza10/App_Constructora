@@ -3,6 +3,7 @@ const router  = express.Router();
 const bcrypt  = require('bcrypt');
 const jwt     = require('jsonwebtoken');
 const db      = require('../db');
+const loginLimiter = require('../middleware/loginLimiter');
 
 if (!process.env.JWT_SECRET) {
   throw new Error(
@@ -28,7 +29,7 @@ function verificarClienteToken(req, res, next) {
 }
 
 // POST /api/portal/login  (login exclusivo de clientes)
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ mensaje: 'Email y password requeridos' });
 

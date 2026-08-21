@@ -196,32 +196,51 @@ CREATE TABLE IF NOT EXISTS bitacora (
 );
 
 -- ------------------------------------------------------------
--- DATOS DE EJEMPLO
+-- DATOS DE EJEMPLO (escenario: 2026-08-21)
+-- Dos clientes con una obra cada uno, para poder validar en el
+-- Portal del Cliente que un cliente NUNCA ve la obra del otro.
 -- ------------------------------------------------------------
 INSERT INTO clientes (nombre, email, telefono, rfc, tipo) VALUES
-('Familia Hernández Torres', 'hernandez@gmail.com', '5512345678', 'HETF800101AA1', 'persona_fisica'),
-('Grupo Inmobiliario Nexus SA', 'contacto@nexus.com.mx', '5598765432', 'GIN901215BB2', 'empresa'),
-('Ayuntamiento de Tlalpan', 'obras@tlalpan.gob.mx', '5587654321', 'ATL700610CC3', 'empresa');
+('Familia Delgado Ríos', 'delgado.rios@example.com', '5511122233', 'DERI850312AB4', 'persona_fisica'),
+('Grupo Constructor Altavista SA de CV', 'contacto@altavista.mx', '5544455566', 'GCA150822CD7', 'empresa');
 
 INSERT INTO obras (nombre, tipo, cliente_id, responsable_id, monto_contrato, fecha_inicio, fecha_fin_estimada, estado, avance_porcentaje, creado_por) VALUES
-('Casa Habitación Pedregal', 'residencial', 1, 2, 1850000.00, '2024-01-15', '2024-09-30', 'activa', 45, 1),
-('Torre Corporativa Nexus', 'comercial', 2, 2, 12500000.00, '2024-03-01', '2025-06-30', 'activa', 18, 1),
-('Renovación Mercado Municipal', 'publica', 3, 2, 3200000.00, '2024-02-10', '2024-12-15', 'pausada', 62, 1);
+('Residencia Delgado Ríos', 'residencial', 1, 2, 1950000.00, '2026-02-10', '2026-11-30', 'activa', 35, 1),
+('Plaza Comercial Altavista', 'comercial',   2, 2, 8400000.00, '2026-03-01', '2027-05-31', 'activa', 12, 1);
 
-INSERT INTO pagos_cliente (obra_id, concepto, monto, fecha_programada, estado) VALUES
-(1, 'Anticipo 30%', 555000.00, '2024-01-15', 'recibido'),
-(1, 'Avance 50%', 370000.00, '2024-04-30', 'pendiente'),
-(1, 'Finiquito 20%', 370000.00, '2024-09-30', 'pendiente'),
-(2, 'Anticipo 25%', 3125000.00, '2024-03-01', 'recibido'),
-(2, 'Primer estimación', 2500000.00, '2024-06-30', 'vencido');
+-- Presupuestos ligados a obra_id (columna agregada arriba en esta misma migración)
+INSERT INTO presupuestos (obra_id, titulo, descripcion, monto, estado, creado_por, revisado_por) VALUES
+(1, 'Cimentación y estructura - Residencia Delgado Ríos', 'Excavación, zapatas, trabes de liga y castillos', 620000.00, 'aprobado', 3, 2),
+(2, 'Instalaciones eléctricas e hidráulicas - Plaza Altavista', 'Instalación completa planta baja y primer nivel', 1450000.00, 'revision', 3, NULL),
+(1, 'Acabados y pintura - Residencia Delgado Ríos', 'Pisos, pintura interior/exterior y herrería', 310000.00, 'borrador', 3, NULL);
+
+INSERT INTO pagos_cliente (obra_id, concepto, monto, fecha_programada, fecha_recibido, estado) VALUES
+(1, 'Anticipo 30%',    585000.00, '2026-02-10', '2026-02-10', 'recibido'),
+(1, 'Avance 40%',      780000.00, '2026-06-30', NULL,         'pendiente'),
+(1, 'Finiquito 30%',   585000.00, '2026-11-30', NULL,         'pendiente'),
+(2, 'Anticipo 25%',   2100000.00, '2026-03-01', '2026-03-03', 'recibido'),
+(2, 'Primera estimación', 1500000.00, '2026-06-15', NULL,     'vencido');
 
 INSERT INTO proveedores (nombre, contacto, telefono, categoria) VALUES
 ('CEMEX México', 'Ventas CDMX', '8008026326', 'materiales'),
-('Varillas del Norte SA', 'Carlos Mendez', '5544332211', 'materiales'),
-('Grúas y Equipos MX', 'Soporte', '5566778899', 'equipo');
+('Aceros del Bajío', 'Carlos Méndez', '5544332211', 'materiales'),
+('Renta de Maquinaria GDL', 'Soporte', '5566778899', 'equipo');
 
-INSERT INTO gastos (obra_id, categoria, concepto, monto, fecha, registrado_por) VALUES
-(1, 'materiales', 'Concreto premezclado 30m3', 45000.00, '2024-02-01', 3),
-(1, 'mano_obra', 'Cuadrilla semana 1-8 feb', 28000.00, '2024-02-08', 3),
-(2, 'materiales', 'Varilla 3/8" — 5 toneladas', 87500.00, '2024-03-15', 3),
-(2, 'subcontratista', 'Instalación eléctrica planta baja', 120000.00, '2024-04-01', 3);
+INSERT INTO gastos (obra_id, categoria, concepto, monto, fecha, proveedor_id, registrado_por) VALUES
+(1, 'materiales',      'Concreto premezclado 40m3', 58000.00, '2026-02-20', 1, 3),
+(1, 'mano_obra',       'Cuadrilla cimentación, semana 1', 32000.00, '2026-02-27', NULL, 3),
+(2, 'materiales',      'Acero de refuerzo, 8 toneladas', 142000.00, '2026-03-20', 2, 3),
+(2, 'equipo',          'Renta de grúa torre - marzo', 65000.00, '2026-03-25', 3, 3);
+
+INSERT INTO avance_obra (obra_id, semana, etapa, porcentaje, descripcion, reportado_por) VALUES
+(1, '2026-02-16', 'Cimentación',  20, 'Excavación y plantilla terminadas', 3),
+(1, '2026-03-02', 'Cimentación',  35, 'Colado de zapatas y trabes de liga', 3),
+(2, '2026-03-09', 'Preliminares', 12, 'Trazo, nivelación y cimbra inicial', 3);
+
+INSERT INTO tareas (obra_id, titulo, descripcion, responsable_id, fecha_inicio, fecha_fin, estado, prioridad, creado_por) VALUES
+(1, 'Solicitar inspección municipal de cimentación', 'Agendar visita antes de continuar con estructura', 3, '2026-03-03', '2026-03-10', 'pendiente', 'alta', 2),
+(2, 'Cotizar segunda entrega de acero', 'Comparar con Aceros del Bajío y un segundo proveedor', 3, '2026-03-15', '2026-03-28', 'en_curso', 'media', 2);
+
+INSERT INTO bitacora (obra_id, fecha, clima, personal_qty, actividades, incidencias, registrado_por) VALUES
+(1, '2026-03-02', 'soleado', 8,  'Colado de zapatas, cuadrilla completa', NULL, 3),
+(2, '2026-03-09', 'nublado', 12, 'Trazo y nivelación de plataforma', 'Retraso de 2h por lluvia en la mañana', 3);

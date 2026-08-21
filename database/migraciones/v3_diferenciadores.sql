@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS clientes_acceso (
 );
 
 -- ------------------------------------------------------------
--- DATOS DE EJEMPLO
+-- DATOS DE EJEMPLO (escenario: 2026-08-21)
 -- ------------------------------------------------------------
 INSERT INTO catalogo_materiales (nombre, unidad, precio_unitario, categoria) VALUES
 ('Concreto premezclado f''c=200', 'm3', 1850.00, 'cimentacion'),
@@ -91,7 +91,27 @@ INSERT INTO catalogo_materiales (nombre, unidad, precio_unitario, categoria) VAL
 ('Cable THW calibre 12', 'm', 14.50, 'instalaciones');
 
 INSERT INTO documentos (obra_id, nombre, categoria, url_archivo, visible_cliente, subido_por) VALUES
-(1, 'Planos arquitectónicos v2', 'plano', '/docs/obra1/planos_v2.pdf', TRUE, 1),
+(1, 'Planos arquitectónicos v1', 'plano', '/docs/obra1/planos_v1.pdf', TRUE, 1),
 (1, 'Licencia de construcción', 'licencia', '/docs/obra1/licencia.pdf', TRUE, 1),
-(1, 'Contrato de obra', 'contrato', '/docs/obra1/contrato.pdf', FALSE, 1),
+(1, 'Contrato de obra firmado', 'contrato', '/docs/obra1/contrato.pdf', FALSE, 1),
 (2, 'Planos estructurales', 'plano', '/docs/obra2/estructurales.pdf', TRUE, 1);
+
+-- ------------------------------------------------------------
+-- ACCESOS DE EJEMPLO AL PORTAL DEL CLIENTE
+-- Un acceso por cliente, para validar en la prueba de rol que
+-- el cliente 1 nunca puede ver datos del cliente 2 (aislamiento
+-- por cliente_id, ver backend/routes/portal.js).
+--
+--   delgado.rios@example.com -> Cliente#2026   (Familia Delgado Ríos, obra 1)
+--   contacto@altavista.mx    -> Altavista#2026 (Grupo Constructor Altavista, obra 2)
+--
+-- Contraseñas en claro documentadas solo aquí y en
+-- INFORME_ANALISIS_Y_MANUAL_USUARIO.md para
+-- pruebas; en la tabla siempre quedan hasheadas con bcrypt. En un alta real
+-- de cliente, genera el hash con database/generar_acceso_cliente.py y
+-- entrega la contraseña temporal al cliente por un canal fuera de banda
+-- (no por correo/WhatsApp en texto plano) exigiendo cambio en el primer login.
+-- ------------------------------------------------------------
+INSERT INTO clientes_acceso (cliente_id, email, password) VALUES
+(1, 'delgado.rios@example.com', '$2b$10$KMAeD/vhYvsUmTjkBEUZgu6jUtIP1HyNxjAI/svljOR2yalbJd9XO'),
+(2, 'contacto@altavista.mx',    '$2b$10$e6lmne0NkRS/.gdNFWnmUOnB1cGRIe/q5r3Bk1y2hBCbBh/kU.KpG');

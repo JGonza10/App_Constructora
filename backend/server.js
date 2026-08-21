@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const http = require('http');
 const socketIo = require('socket.io');
 
@@ -28,6 +29,7 @@ const io = socketIo(server, {
 });
 
 // Middlewares globales
+app.use(helmet()); // cabeceras de seguridad (HSTS, X-Content-Type-Options, etc.)
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.json());
 

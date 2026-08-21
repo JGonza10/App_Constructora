@@ -2,6 +2,8 @@
 
 Aplicación web fullstack para administrar la operación de una empresa constructora: obras, presupuestos, gastos, avances, cobros a clientes, proveedores, tareas, bitácora de obra, estimación de materiales, documentos y un portal de solo lectura para el cliente final, con alertas en tiempo real y control de acceso por rol.
 
+📄 **Documentación adicional:** [`INFORME_ANALISIS_Y_MANUAL_USUARIO.md`](./INFORME_ANALISIS_Y_MANUAL_USUARIO.md) — análisis completo del sistema, matriz de permisos por rol, revisión de seguridad (manejo de contraseñas, límite de intentos de login, dependencias vulnerables), plan de la futura app móvil, y un manual de usuario paso a paso para validar los 4 roles (admin, supervisor, empleado, cliente/portal) con datos de ejemplo reales.
+
 ---
 
 ## Estado actual
@@ -130,3 +132,5 @@ Esto genera el hash bcrypt y el `INSERT` para la tabla `clientes_acceso`.
 - **Sin pruebas automatizadas**: no se detectaron suites de test en backend ni frontend.
 - **CORS y Socket.io** están controlados por la variable `FRONTEND_URL`; si no se define, se abre a cualquier origen (`*`), lo cual es aceptable solo en desarrollo local.
 - **No copiar contraseñas reales**: los archivos `.env` están correctamente excluidos en `.gitignore` (`.env`, `*/.env`); usa siempre `.env.example` como referencia de las variables requeridas.
+- **Seguridad de login**: `POST /api/usuarios/login` y `POST /api/portal/login` tienen un límite de 8 intentos por IP cada 15 minutos (`backend/middleware/loginLimiter.js`, agregado junto con `helmet` en la revisión de seguridad de 2026-08-21 — detalle completo en `INFORME_ANALISIS_Y_MANUAL_USUARIO.md`).
+- **Contraseñas de ejemplo**: las credenciales de prueba (admin/supervisor/empleado/portal) que trae el proyecto están documentadas únicamente en `INFORME_ANALISIS_Y_MANUAL_USUARIO.md` — cámbialas o elimina esas cuentas antes de exponer el sistema a internet.

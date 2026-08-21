@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 const verificarToken = require('../middleware/auth');
 const verificarRol = require('../middleware/roles');
+const loginLimiter = require('../middleware/loginLimiter');
 
 if (!process.env.JWT_SECRET) {
   throw new Error(
@@ -45,7 +46,7 @@ router.post('/registro', verificarToken, verificarRol('admin'), async (req, res)
 });
 
 // POST /api/usuarios/login
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ mensaje: 'Email y password requeridos' });

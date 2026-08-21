@@ -45,20 +45,27 @@ CREATE TABLE IF NOT EXISTS alertas (
 );
 
 -- ============================================
--- DATOS DE EJEMPLO
+-- DATOS DE EJEMPLO (escenario: 2026-08-21)
+-- Cuentas de prueba para validar cada rol interno.
+-- Contraseñas en claro SOLO documentadas aquí y en
+-- INFORME_ANALISIS_Y_MANUAL_USUARIO.md para fines de prueba; en la
+-- base de datos siempre viven hasheadas
+-- con bcrypt (nunca en texto plano). Cámbialas antes de producción.
+--
+--   ana.ramirez@constructora.com      -> Ana Ramírez      (admin)      -> Direccion#2026
+--   jorge.villasenor@constructora.com -> Jorge Villaseñor  (supervisor) -> Supervisa#2026
+--   paola.reyes@constructora.com      -> Paola Reyes       (empleado)   -> Campo#2026
+--
+-- (regenerados con: node -e "require('bcrypt').hashSync(pwd,10)")
 -- ============================================
-
--- Passwords: Admin123! / Super123! / Empl123! (bcrypt hash placeholder)
 INSERT INTO usuarios (nombre, email, password, rol) VALUES
-  ('Carlos Admin', 'admin@constructora.com', '$2b$10$psHpOX6OCkgVYj8uDg3KqOGy1gM0ZVJBmqwnG85dMIr9z9fhpL9Uu', 'admin'),
-  ('Laura Supervisora', 'supervisor@constructora.com', '$2b$10$hzjyv/pGAkP0YUdiGwYg2eoVPKdVRtld80SgugS2YM9365Dl25h.2', 'supervisor'),
-  ('Miguel Empleado', 'empleado@constructora.com', '$2b$10$JaIVx7T2lJGMviOAzuqrleU6JgH0xt.mhdK9wukfceemGzBXmc62O', 'empleado');
+  ('Ana Ramírez',      'ana.ramirez@constructora.com',      '$2b$10$2pAlZ0Uylx0dMtdswKmTJeA1aXfDN/8u3GixkuthTNZZfNU48lvGO', 'admin'),
+  ('Jorge Villaseñor', 'jorge.villasenor@constructora.com',  '$2b$10$NoDefJD4L6lNu.4l6QyQkeEHhsZCQsKD3Ug82jAiRVXL3Hgeh7wQi', 'supervisor'),
+  ('Paola Reyes',      'paola.reyes@constructora.com',       '$2b$10$aRDC.oXoiOfbgMJMdeJ9yeFbcFK6aydPkv.UF1aIVwMTKgsRBtXAK', 'empleado');
 
-INSERT INTO presupuestos (titulo, descripcion, monto, estado, creado_por) VALUES
-('Obra Norte - Cimientos', 'Excavación y cimientos edificio norte', 450000.00, 'aprobado', 3),
-('Remodelación Oficinas', 'Pintura, pisos y mobiliario', 85000.00, 'revision', 3),
-('Proyecto Torre Sur', 'Construcción 12 pisos zona sur', 2300000.00, 'borrador', 3);
+-- Los presupuestos de ejemplo se insertan en migraciones/v2_ampliacion.sql,
+-- después de que la columna obra_id existe, para que queden ligados a una obra real.
 
 INSERT INTO alertas (mensaje, tipo, usuario_id) VALUES
-('Presupuesto "Obra Norte" fue aprobado', 'success', 3),
-('Presupuesto "Remodelación Oficinas" enviado a revisión', 'info', 2);
+('Bienvenida: cuenta de administrador lista para el recorrido de prueba', 'info', 1),
+('Recuerda: hay un presupuesto pendiente de revisión en la Torre Altavista', 'warning', 2);

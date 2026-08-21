@@ -1,9 +1,9 @@
 import bcrypt
 
 usuarios = [
-    (1, "Admin123!"),
-    (2, "Super123!"),
-    (3, "Empl123!")
+    (1, "Direccion#2026"),
+    (2, "Supervisa#2026"),
+    (3, "Campo#2026")
 ]
 
 print("Ejecuta estas líneas en phpMyAdmin > pestaña SQL:\n")

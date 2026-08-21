@@ -10,18 +10,18 @@ Uso:
 import bcrypt
 
 usuarios = [
-    ("admin@constructora.com",    "Admin123!"),
-    ("supervisor@constructora.com", "Super123!"),
-    ("empleado@constructora.com",  "Empl123!"),
+    ("ana.ramirez@constructora.com",      "Direccion#2026"),
+    ("jorge.villasenor@constructora.com", "Supervisa#2026"),
+    ("paola.reyes@constructora.com",      "Campo#2026"),
 ]
 
 print("-- Copia estas líneas al archivo constructora.sql (reemplaza los INSERT de usuarios)\n")
 print("INSERT INTO usuarios (nombre, email, password, rol) VALUES")
 filas = []
 nombres_roles = [
-    ("Carlos Admin", "admin"),
-    ("Laura Supervisora", "supervisor"),
-    ("Miguel Empleado", "empleado"),
+    ("Ana Ramírez", "admin"),
+    ("Jorge Villaseñor", "supervisor"),
+    ("Paola Reyes", "empleado"),
 ]
 for (email, pwd), (nombre, rol) in zip(usuarios, nombres_roles):
     hashed = bcrypt.hashpw(pwd.encode(), bcrypt.gensalt(10)).decode()

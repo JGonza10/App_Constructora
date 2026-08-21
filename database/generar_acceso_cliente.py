@@ -20,7 +20,16 @@ hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt(10)).decode()
 print("\n-- Ejecuta este INSERT en MySQL:\n")
 print(f"INSERT INTO clientes_acceso (cliente_id, email, password) VALUES")
 print(f"  ({cliente_id}, '{email}', '{hashed}');")
-print(f"\n-- Comparte con el cliente:")
-print(f"--   URL del portal: http://tu-dominio.com/portal/login")
+print(f"\n-- Datos de acceso para el cliente (URL del portal + email + contraseña temporal):")
+print(f"--   URL del portal: https://tu-dominio.com/portal/login")
 print(f"--   Email: {email}")
-print(f"--   Contraseña: {password}")
+print(f"--   Contraseña temporal: {password}")
+print(
+    "\n-- IMPORTANTE (seguridad): no pegues esta contraseña en un correo o chat "
+    "en texto plano ni la dejes en el historial de la terminal.\n"
+    "-- Entrégala en persona, por llamada telefónica, o por un canal que el "
+    "cliente ya usa y controla (WhatsApp donde ya lo conoces, verbalmente, etc.),\n"
+    "-- y trátala como temporal: la tabla clientes_acceso no tiene todavía un "
+    "flujo de 'cambiar contraseña', así que documenta con el cliente que esta\n"
+    "-- es la que va a usar de forma permanente hasta que se implemente ese flujo."
+)

@@ -53,9 +53,6 @@ export default function Login() {
             {cargando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-        <p style={styles.hint}>
-          Demo: admin@constructora.com / Admin123!
-        </p>
       </div>
     </div>
   );
@@ -69,6 +66,5 @@ const styles = {
   campo: { marginBottom: '16px' },
   label: { display: 'block', marginBottom: '6px', color: '#333', fontWeight: '600', fontSize: '14px' },
   input: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' },
-  boton: { width: '100%', padding: '12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' },
-  hint: { textAlign: 'center', color: '#999', fontSize: '12px', marginTop: '16px' }
+  boton: { width: '100%', padding: '12px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }
 };
