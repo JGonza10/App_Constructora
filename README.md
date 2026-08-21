@@ -26,6 +26,8 @@ No hay botón para "crear una obra" directamente — nace sola cuando se acepta 
 - **Auth**: `Flask-Login` con sesiones de cookie `HttpOnly`/`Secure` (no JWT en `localStorage`), contraseñas con `Flask-Bcrypt`, `Flask-WTF` para CSRF, `Flask-Limiter` contra fuerza bruta en los dos logins (interno y portal).
 - **Despliegue**: Railway — un servicio Python (Gunicorn) + un servicio MySQL, en el mismo proyecto, conectado al repo de GitHub.
 
+**URL en vivo:** https://constructora-backend-production-2f24.up.railway.app (el nombre del servicio quedó de la versión anterior en Node — hoy es toda la app, no solo el backend).
+
 ---
 
 ## Estructura del proyecto
