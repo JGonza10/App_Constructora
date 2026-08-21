@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nuevo pago programado{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>💰 Programar pago del cliente — {{ obra.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.concepto, "col-md-6") }}
+      {{ campo(form.monto, "col-md-3") }}
+      {{ campo(form.fecha_programada, "col-md-3") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Programar pago</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

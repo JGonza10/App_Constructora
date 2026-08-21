@@ -4,47 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Qué es esto
 
-Aplicación web fullstack para administrar la operación de una empresa constructora: obras, presupuestos, gastos, avance de obra, cobros a clientes, proveedores, tareas, bitácora, estimación de materiales, documentos por obra y un portal de solo lectura separado para el cliente final. Backend Node.js/Express + MySQL, frontend React. Todo el dominio, rutas y mensajes están en español — sigue esa convención.
+Aplicación web Python/Flask (monolítica, sin frontend separado) para administrar la operación de una empresa constructora. Todo el dominio, rutas y mensajes están en español — sigue esa convención.
 
-Sin pruebas automatizadas, sin linter ni CI configurados. Estado: funcional/en desarrollo, no endurecido para producción (ver `README.md`, sección "Estado actual" y "Notas relevantes" — no las repito aquí).
+**Reescrita por completo el 2026-08-21** — la versión anterior era Node.js/Express + React (ver historial de git antes de ese commit si necesitas referencia). Se reescribió porque el modelo de datos anterior era incoherente: exigía capturar el monto final del contrato de una obra *antes* de que existiera ninguna cotización, y `Presupuesto`/`Obra.monto_contrato` eran dos números que nunca se sincronizaban entre sí.
 
-## Comandos
+## El flujo que gobierna todo el diseño
 
-**Base de datos (MySQL 8+)**, en orden — el esquema no usa un ORM con migraciones automáticas, hay que aplicar los tres archivos SQL a mano:
-```bash
-mysql -u root -p < database/constructora.sql
-mysql -u root -p < database/migraciones/v2_ampliacion.sql
-mysql -u root -p < database/migraciones/v3_diferenciadores.sql
+```
+Cliente → Levantamiento (qué pidió el cliente) → Cotización (versionable, línea por línea)
+   → [al ACEPTARSE] nace la Obra, con monto_contrato = total de esa cotización
+      → gastos, mano_obra, avance, tareas, bitácora, documentos, pagos_cliente,
+        todo con obra_id como llave — nunca se mezclan entre obras
 ```
 
-**Backend** (`backend/`, Express 4 + Socket.io):
-```bash
-cd backend
-cp .env.example .env   # define DB_* y JWT_SECRET — el servidor NO arranca sin ellos (ver abajo)
-npm install
-npm run dev             # nodemon, puerto 3001
-npm start                # producción (node server.js)
-```
+No existe una ruta para crear una `Obra` directamente — la única forma de que exista es `cotizaciones.aceptar()` (`constructora/cotizaciones.py`). Si necesitas agregar una obra "manual" para algún caso especial, resiste la tentación de agregar un formulario directo: crea el levantamiento + cotización aceptada por el mismo camino, o vas a reintroducir la misma incoherencia que motivó la reescritura.
 
-**Frontend** (`frontend/`, Create React App):
-```bash
-cd frontend
-npm install
-npm start   # puerto 3000; proxy de package.json redirige /api -> http://localhost:3001, no hace falta configurar REACT_APP_API_URL en local
-```
-
-No hay `npm test` real configurado en ninguno de los dos `package.json` (frontend no incluye el script `test` de CRA, backend no tiene scripts de test).
+Cada vista de creación, al guardar, redirige a una pantalla de "¿qué sigue?" (`obras/siguiente_registro.html`, `levantamientos/siguiente_paso.html`, `obras/siguiente_paso_inicial.html`) en vez de quedarse en la misma lista — es un patrón deliberado (flujo guiado pedido explícitamente), no lo quites al tocar esas rutas.
 
 ## Arquitectura
 
-- **`backend/server.js`** — único punto de entrada Express. Registra un router por dominio bajo `/api/<recurso>` (usuarios, presupuestos, admin, clientes, obras, gastos, avance, pagos, proveedores, tareas, bitacora, tablero, estimaciones, documentos, portal) más `/api/health`. Cada request recibe `req.io` (instancia de Socket.io) inyectado por middleware para que las rutas puedan emitir eventos en tiempo real (`alerta_recibida`, `presupuesto_cambio`, `obra_cambio`, `gasto_nuevo`) sin importar Socket.io en cada archivo de ruta.
-- **Auth**: `backend/middleware/auth.js` (`verificarToken`) exige `Authorization: Bearer <jwt>`, firmado con `JWT_SECRET`; **lanza excepción al cargar el módulo si `JWT_SECRET` no está definido** — no hay fallback inseguro. `backend/middleware/roles.js` (`verificarRol(...roles)`) es un factory que compone con `verificarToken` en las rutas (`req.usuario.rol` debe estar en la lista); roles: `admin`, `supervisor`, `empleado`. `backend/middleware/loginLimiter.js` (`express-rate-limit`, 8 intentos / 15 min por IP) está aplicado en `POST /api/usuarios/login` y `POST /api/portal/login` — si agregas otro endpoint de login (ej. para la futura app móvil), aplícale el mismo limitador. `helmet()` está activo como middleware global en `server.js`.
-- **Portal del cliente** (`routes/portal.js`) es un sistema de auth y datos **separado** del admin/empleado — login propio, solo lectura, contra la tabla `clientes_acceso`. El acceso de cada cliente se crea manualmente corriendo `database/generar_acceso_cliente.py` (genera el hash bcrypt + INSERT), no hay flujo de alta desde la UI.
-- **Base de datos**: `database/constructora.sql` es el esquema base (usuarios, presupuestos, alertas); `migraciones/v2_ampliacion.sql` agrega el dominio de negocio principal (clientes, obras, gastos, avance_obra, pagos_cliente, proveedores, ordenes_compra, tareas, bitacora); `migraciones/v3_diferenciadores.sql` agrega catalogo_materiales, estimaciones/estimacion_items, documentos, clientes_acceso. Si agregas una tabla nueva, sigue el patrón de migración incremental numerada (`vN_*.sql`) en vez de editar el esquema base.
-- **Estimación de materiales**: la calculadora "congela" el precio del catálogo al momento de guardar una estimación (no recalcula si el catálogo cambia después) — respeta ese comportamiento si tocas `routes/estimaciones.js`.
-- **Documentos**: el módulo solo guarda la referencia (`url_archivo`) en la tabla `documentos`, con versionado y un flag de visibilidad hacia el portal del cliente; no hay almacenamiento binario propio, se asume un servicio externo (S3, disco, etc.) para el archivo real.
-- **Tiempo real**: `server.js` expone eventos genéricos de Socket.io (`unirse_sala` por rol, y los cuatro eventos de dominio arriba). El frontend los consume en `AlertasTiempoReal` y otros componentes vía `socket.io-client`.
-- **Despliegue**: todo en Railway, un solo proyecto (`app-constructora`) con 3 servicios — `constructora-backend` (`rootDirectory: backend`), `constructora-frontend` (`rootDirectory: frontend`, build de React servido como sitio estático vía `RAILPACK_STATIC_FILE_ROOT=build`) y `MySQL`. `db.js` acepta tanto `DB_*` como las variables `MYSQL*`/`MYSQLHOST` etc. que Railway inyecta automáticamente en el servicio de MySQL — hay que referenciarlas explícitamente en el backend (`${{MySQL.MYSQLHOST}}`, etc.), Railway no las comparte solas entre servicios. `DB_NAME` está fijado a `constructora` a mano porque los scripts SQL hacen `CREATE DATABASE constructora`, distinto al nombre `railway` que trae la base por defecto. `REACT_APP_API_URL` del frontend se hornea en el build (Create React App), así que un cambio en la URL del backend requiere rebuild del frontend, no solo un restart. Ambos servicios están conectados al repo de GitHub (`JGonza10/App_Constructora`, rama `master`) para redeploy automático en cada push. Hay `Procfile` (`web: node server.js`) de una época en que se planeaba Heroku/Vercel — ya no aplica, se puede ignorar.
-- **CORS/Socket.io**: controlados por `FRONTEND_URL`; si no está definida, se abre a cualquier origen (`*`) — aceptable solo en desarrollo local, no lo dejes así en un despliegue real. Ojo: CORS solo frena navegadores web — no protege contra una app móvil nativa ni contra un cliente HTTP directo (curl, Postman); la verdadera barrera de acceso es `verificarToken`/`verificarRol` en cada ruta, no CORS.
-- **App móvil planeada**: además del frontend web, está previsto construir una app móvil (nativa o PWA) consumiendo esta misma API — el diseño de auth con JWT en header `Authorization` (en vez de cookies) ya es compatible con eso sin cambios en el backend. Si implementas la app, el token debe guardarse en almacenamiento seguro del SO (`expo-secure-store` / `react-native-keychain`), nunca en `AsyncStorage` plano. Detalle completo en `INFORME_ANALISIS_Y_MANUAL_USUARIO.md`, sección 6.
-- **Datos de ejemplo**: los usuarios/clientes/obras de prueba se reescribieron por completo el 2026-08-21 (ver `INFORME_ANALISIS_Y_MANUAL_USUARIO.md`). Si necesitas regenerar hashes de contraseñas de ejemplo, `database/generar_hashes.py`, `database/fix_passwords.py` y `database/generar_acceso_cliente.py` ya están alineados con ese mismo escenario — no reintroduzcas los usuarios viejos (`admin@constructora.com`, etc.), ya no existen.
+- **App factory**: `constructora/__init__.py` (`create_app(config_class)`). Registra un blueprint por dominio: `auth`, `portal`, `main`, `clientes`, `levantamientos`, `cotizaciones`, `obras`, `usuarios`, `trabajadores`.
+- **Auth interna**: `Flask-Login` con sesiones de cookie (`SESSION_COOKIE_HTTPONLY`/`SECURE`/`SAMESITE`), no JWT. `Usuario` (rol: admin/supervisor/empleado) y `ClienteAcceso` (portal) comparten el mismo `login_manager` mediante un `get_id()` compuesto (`"usuario:<id>"` / `"cliente:<id>"`), resuelto en el `user_loader` de `__init__.py`. `current_user.tipo` distingue cuál es cuál. `constructora/decorators.py` (`roles_requeridos(...)`, `solo_cliente_portal`) hace las veces del viejo middleware de roles.
+- **Rate limiting de login**: `Flask-Limiter`, 8 intentos/15 min, aplicado en `auth.login` y `portal.login` (`constructora/auth.py`, `constructora/portal.py`).
+- **Mano de obra separada de gastos**: `PagoManoObra` (ligado a `Trabajador`, con `oficio`) es un modelo aparte de `Gasto` — la categoría `mano_obra` ya NO existe en `Gasto.categoria`. Si agregas un nuevo tipo de costo, decide primero si es "alguien que cobra por su trabajo" (va a `PagoManoObra`/`Trabajador`) o "algo que se compra" (va a `Gasto`).
+- **Cotizaciones versionadas**: `Cotizacion.version` + `Levantamiento.siguiente_version` — al rechazar una cotización, la UI ofrece crear una nueva versión del mismo levantamiento en vez de editar la rechazada. `Cotizacion.total` es una `@property` calculada desde `CotizacionItem` (nunca un campo guardado), pero `Obra.monto_contrato` sí es un snapshot congelado al momento de aceptar — coherente con cómo `estimaciones` ya congelaba precios en el sistema anterior.
+- **Portal del cliente**: `constructora/portal.py`, aislado por `ClienteAcceso.cliente_id`; toda consulta de obra filtra `Obra.query.filter_by(id=obra_id, cliente_id=current_user.cliente_id)` — nunca actualices esas vistas para hacer `Obra.query.get(obra_id)` a secas, es exactamente el bug de aislamiento que las pruebas (`tests/test_flujo_completo.py::test_portal_cliente_no_ve_obras_de_otro_cliente`) existen para detectar.
+- **Base de datos**: SQLAlchemy contra MySQL (`PyMySQL`). No hay migraciones tipo Alembic todavía — `flask --app wsgi init-db` corre `db.create_all()` (no destructivo, no altera columnas existentes). Para cambios de esquema en producción, por ahora hay que migrar a mano; si el esquema empieza a cambiar seguido, vale la pena meter Flask-Migrate.
+- **Documentos**: igual que antes, solo se guarda la referencia (`url_archivo`) en `Documento`, con flag `visible_cliente` — no hay almacenamiento binario propio.
+
+## Comandos
+
+```bash
+python -m venv venv && venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env      # define SECRET_KEY y DB_* — la app no arranca sin ellos
+python -m flask --app wsgi init-db      # crea tablas (no destructivo)
+python seed.py                           # ALTERNATIVA: borra todo y carga el escenario de ejemplo
+python wsgi.py                           # http://localhost:5000
+pytest tests/ -v                         # corre contra SQLite en memoria, no necesita MySQL
+```
+
+## Despliegue
+
+Todo en Railway, un proyecto (`app-constructora`) con 2 servicios: el servicio Python (Gunicorn, `Procfile`: `web: gunicorn wsgi:app`) y `MySQL`. Conectado al repo de GitHub (`JGonza10/App_Constructora`, rama `master`) para redeploy automático. `DB_NAME` en Railway debe apuntar al nombre real de la base que usa la app (revisa qué nombre quedó configurado — el sistema anterior tuvo un bug por esto: `CREATE DATABASE constructora` en el SQL vs. `railway`, el nombre por defecto que da Railway).

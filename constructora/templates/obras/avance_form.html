@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nuevo avance{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>📈 Nuevo avance — {{ obra.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.semana, "col-md-4") }}
+      {{ campo(form.etapa, "col-md-4") }}
+      {{ campo(form.porcentaje, "col-md-4") }}
+      {{ campo(form.descripcion, "col-12") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Registrar avance</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

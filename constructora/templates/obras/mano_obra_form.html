@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nuevo pago de mano de obra{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>👷 Nuevo pago de mano de obra — {{ obra.nombre }}</h3>
+  <p class="text-muted">
+    ¿El trabajador no está en la lista?
+    <a href="{{ url_for('trabajadores.nuevo', obra_id=obra.id) }}">Regístralo primero →</a>
+  </p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.trabajador_id, "col-md-6") }}
+      {{ campo(form.concepto, "col-md-6") }}
+      {{ campo(form.dias_o_unidades, "col-md-4") }}
+      {{ campo(form.monto, "col-md-4") }}
+      {{ campo(form.fecha, "col-md-4") }}
+    </div>
+    <button type="submit" class="btn btn-success">Registrar pago</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

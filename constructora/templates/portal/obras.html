@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block titulo %}Mis obras{% endblock %}
+{% block contenido %}
+<h2 class="mb-3">Tus obras</h2>
+<div class="row">
+  {% for o in obras %}
+  <div class="col-md-4 mb-3">
+    <a href="{{ url_for('portal.obra_detalle', obra_id=o.id) }}" class="text-decoration-none text-dark">
+      <div class="card p-3 h-100">
+        <div class="fw-bold">{{ o.nombre }}</div>
+        <span class="badge bg-primary badge-estado" style="width:fit-content">{{ o.estado }}</span>
+        <div class="progress mt-2" style="height:8px;"><div class="progress-bar" style="width:{{ o.avance_porcentaje }}%"></div></div>
+        <div class="text-muted small mt-1">{{ o.avance_porcentaje }}% de avance</div>
+      </div>
+    </a>
+  </div>
+  {% else %}
+  <p class="text-muted">Todavía no hay obras asociadas a tu cuenta.</p>
+  {% endfor %}
+</div>
+{% endblock %}

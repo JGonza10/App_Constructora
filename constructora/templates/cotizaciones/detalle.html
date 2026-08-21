@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}{{ cotizacion.titulo }}{% endblock %}
+{% block contenido %}
+<div class="card p-4 mb-4">
+  <span class="badge bg-secondary badge-estado mb-2" style="width:fit-content">{{ cotizacion.estado }}</span>
+  <h3 class="mb-1">{{ cotizacion.titulo }} <small class="text-muted">v{{ cotizacion.version }}</small></h3>
+  <p class="text-muted mb-3">👤 {{ cotizacion.levantamiento.cliente.nombre }} · 📋 {{ cotizacion.levantamiento.titulo }}</p>
+
+  <table class="table">
+    <thead><tr><th>Concepto</th><th>Unidad</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
+    <tbody>
+      {% for it in cotizacion.items %}
+      <tr>
+        <td>{{ it.concepto }}</td><td>{{ it.unidad }}</td><td>{{ it.cantidad }}</td>
+        <td>${{ "{:,.2f}".format(it.precio_unitario) }}</td>
+        <td>${{ "{:,.2f}".format(it.subtotal) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th colspan="4" class="text-end">Total</th><th>${{ "{:,.2f}".format(cotizacion.total) }}</th></tr>
+    </tfoot>
+  </table>
+
+  {% if cotizacion.estado == "borrador" %}
+    <form method="post" action="{{ url_for('cotizaciones.enviar', cotizacion_id=cotizacion.id) }}">
+      <button type="submit" class="btn btn-primary">Marcar como enviada al cliente →</button>
+    </form>
+
+  {% elif cotizacion.estado == "enviada" and current_user.rol in ("admin", "supervisor") %}
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card p-3 bg-success bg-opacity-10 border border-success">
+          <h6>✅ El cliente aceptó</h6>
+          <form method="post" action="{{ url_for('cotizaciones.aceptar', cotizacion_id=cotizacion.id) }}">
+            {{ form_aceptar.hidden_tag() }}
+            {{ campo(form_aceptar.responsable_id) }}
+            <div class="row">
+              {{ campo(form_aceptar.fecha_inicio, "col-6") }}
+              {{ campo(form_aceptar.fecha_fin_estimada, "col-6") }}
+            </div>
+            <button type="submit" class="btn btn-success w-100">Aceptar y crear la obra →</button>
+          </form>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card p-3 bg-danger bg-opacity-10 border border-danger">
+          <h6>✕ El cliente rechazó</h6>
+          <form method="post" action="{{ url_for('cotizaciones.rechazar', cotizacion_id=cotizacion.id) }}">
+            {{ form_rechazo.hidden_tag() }}
+            {{ campo(form_rechazo.motivo_rechazo) }}
+            <button type="submit" class="btn btn-outline-danger w-100">Registrar rechazo</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  {% elif cotizacion.estado == "aceptada" %}
+    <div class="alert alert-success">
+      Esta cotización se convirtió en la obra
+      <a href="{{ url_for('obras.detalle', obra_id=cotizacion.obra.id) }}"><strong>{{ cotizacion.obra.nombre }}</strong></a>.
+    </div>
+
+  {% elif cotizacion.estado == "rechazada" %}
+    <div class="alert alert-danger">Rechazada: {{ cotizacion.motivo_rechazo }}</div>
+    <a href="{{ url_for('cotizaciones.nueva', levantamiento_id=cotizacion.levantamiento_id) }}" class="btn btn-primary">Crear nueva versión de la cotización</a>
+  {% endif %}
+</div>
+{% endblock %}

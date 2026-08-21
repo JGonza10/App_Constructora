@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nueva cotización{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>Cotización para "{{ levantamiento.titulo }}"</h3>
+  <p class="text-muted">Paso 3 de 4: arma la cotización, línea por línea. Cliente: <strong>{{ levantamiento.cliente.nombre }}</strong></p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.titulo, "col-md-8") }}
+      {{ campo(form.notas, "col-12") }}
+    </div>
+
+    <h6 class="mt-3">Conceptos</h6>
+    <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr><th>Concepto</th><th style="width:90px">Unidad</th><th style="width:110px">Cantidad</th><th style="width:150px">Precio unitario</th></tr>
+      </thead>
+      <tbody>
+        {% for item in form.items %}
+        <tr>
+          <td>{{ item.form.concepto(class="form-control form-control-sm") }}</td>
+          <td>{{ item.form.unidad(class="form-control form-control-sm") }}</td>
+          <td>{{ item.form.cantidad(class="form-control form-control-sm") }}</td>
+          <td>{{ item.form.precio_unitario(class="form-control form-control-sm") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <button type="submit" name="accion" value="agregar_linea" class="btn btn-outline-secondary btn-sm mb-3">+ Agregar línea</button>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-primary">Guardar cotización (borrador) →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

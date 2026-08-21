@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block titulo %}{{ levantamiento.titulo }}{% endblock %}
+{% block contenido %}
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-start">
+    <div>
+      <span class="badge bg-secondary badge-estado mb-2">{{ levantamiento.estado }}</span>
+      <h3 class="mb-1">{{ levantamiento.titulo }}</h3>
+      <p class="text-muted mb-0">👤 {{ levantamiento.cliente.nombre }} · 📍 {{ levantamiento.direccion or "sin dirección" }}</p>
+    </div>
+    <a href="{{ url_for('cotizaciones.nueva', levantamiento_id=levantamiento.id) }}" class="btn btn-primary">+ Nueva cotización</a>
+  </div>
+  <hr>
+  <h6>Indicaciones del cliente</h6>
+  <p>{{ levantamiento.indicaciones_cliente }}</p>
+</div>
+
+<h5>Cotizaciones</h5>
+{% if not levantamiento.cotizaciones %}
+<p class="text-muted">Todavía no hay ninguna cotización para este levantamiento.</p>
+{% else %}
+<div class="list-group">
+  {% for c in levantamiento.cotizaciones %}
+  <a href="{{ url_for('cotizaciones.detalle', cotizacion_id=c.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+    <span>{{ c.titulo }} (v{{ c.version }})</span>
+    <span>
+      <span class="badge bg-secondary badge-estado">{{ c.estado }}</span>
+      <strong class="ms-2">${{ "{:,.2f}".format(c.total) }}</strong>
+    </span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

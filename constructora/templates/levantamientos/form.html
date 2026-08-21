@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>{{ titulo }}</h3>
+  <p class="text-muted">Paso 2 de 4: qué te pidió el cliente. Esto es lo que después se convierte en la cotización.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.cliente_id, "col-md-6") }}
+      {{ campo(form.tipo_obra, "col-md-6") }}
+      {{ campo(form.titulo, "col-12") }}
+      {{ campo(form.direccion, "col-12") }}
+      {{ campo(form.indicaciones_cliente, "col-12") }}
+      {{ campo(form.fecha_visita, "col-md-4") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar y continuar →</button>
+  </form>
+</div>
+{% endblock %}

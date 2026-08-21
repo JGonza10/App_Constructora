@@ -1,46 +1,30 @@
 # Sistema de Gestión — Constructora
 
-Aplicación web fullstack para administrar la operación de una empresa constructora: obras, presupuestos, gastos, avances, cobros a clientes, proveedores, tareas, bitácora de obra, estimación de materiales, documentos y un portal de solo lectura para el cliente final, con alertas en tiempo real y control de acceso por rol.
+Aplicación web (Python/Flask, monolítica) para administrar la operación de una empresa constructora, con un flujo obligatorio que refleja cómo se trabaja en la vida real:
 
-📄 **Documentación adicional:** [`INFORME_ANALISIS_Y_MANUAL_USUARIO.md`](./INFORME_ANALISIS_Y_MANUAL_USUARIO.md) — análisis completo del sistema, matriz de permisos por rol, revisión de seguridad (manejo de contraseñas, límite de intentos de login, dependencias vulnerables), plan de la futura app móvil, y un manual de usuario paso a paso para validar los 4 roles (admin, supervisor, empleado, cliente/portal) con datos de ejemplo reales.
+**Cliente → Levantamiento (qué pidió) → Cotización (versionable) → al aceptarse, nace la Obra → todo lo que pasa en campo (gastos de materiales, pagos de mano de obra por oficio, avance, tareas, bitácora, documentos, pagos del cliente) queda ligado únicamente a esa obra.**
 
----
+No hay botón para "crear una obra" directamente — nace sola cuando se acepta una cotización, con el monto de contrato heredado de ahí (nunca se vuelve a teclear a mano). Cada formulario, al guardarse, ofrece el siguiente paso lógico en vez de dejarte adivinar a dónde ir.
 
-## Estado actual
-
-**Funcional / en desarrollo activo.** El backend expone todos los módulos descritos abajo y el frontend los consume mediante rutas internas y un portal de cliente separado. No se encontraron pruebas automatizadas (no hay carpeta `tests` ni scripts `test` en los `package.json`), ni configuración de linting o CI. Es un proyecto apto para uso interno / demo, pero antes de producción conviene añadir pruebas, revisar los valores por defecto inseguros (ver "Notas relevantes") y endurecer el manejo de errores.
+📄 **Documentación adicional:** [`INFORME_ANALISIS_Y_MANUAL_USUARIO.md`](./INFORME_ANALISIS_Y_MANUAL_USUARIO.md) — diagnóstico del sistema anterior, diseño del flujo nuevo, revisión de seguridad y manual de usuario por rol.
 
 ---
 
-## Características principales
+## Roles
 
-- **Gestión de obras**: alta de obras con cliente, tipo, responsable y monto de contrato; KPIs financieros (gasto real vs. contrato, saldo disponible).
-- **Presupuestos** con flujo de estados (`borrador → revisión → aprobado / rechazado`).
-- **Gastos reales** por obra, con resumen por categoría.
-- **Avance de obra** semanal por etapa.
-- **Pagos de cliente**: calendario de cobros, pagos pendientes/vencidos.
-- **Proveedores y órdenes de compra**.
-- **Tareas y bitácora diaria** de obra.
-- **Tablero ejecutivo** con KPIs agregados de todas las obras activas.
-- **Estimación de materiales**: catálogo de precios por categoría y calculadora que "congela" el precio al guardar una estimación.
-- **Gestión documental** por obra, con versionado automático y control de visibilidad hacia el cliente.
-- **Portal del cliente**: login y API independientes, de solo lectura, para que cada cliente consulte el estado de su obra, avance, estado de cuenta y documentos compartidos.
-- **Alertas y eventos en tiempo real** vía Socket.io (nuevas alertas, cambios de presupuesto/obra, gastos registrados).
-- **Control de acceso por rol** (admin, supervisor, empleado) mediante middleware de JWT + verificación de rol.
-- **Exportación** de reportes a Excel y PDF (ExcelJS, PDFKit).
+- **admin** — control total, incluye alta de usuarios internos.
+- **supervisor** — gestiona clientes, levantamientos, cotizaciones (aceptar/rechazar), obras.
+- **empleado** — captura operación de campo: gastos, mano de obra, avance, bitácora, tareas.
+- **cliente (portal)** — login aparte, de solo lectura, ve únicamente su(s) obra(s): avance, estado de cuenta, documentos marcados como visibles.
 
 ---
 
 ## Stack tecnológico
 
-- **Backend**: Node.js + Express 4, MySQL2 (driver), Socket.io (tiempo real), JWT (`jsonwebtoken`) + bcrypt (autenticación), dotenv, ExcelJS y PDFKit (exportación). Servidor confirmado en `backend/server.js` y `backend/db.js`.
-- **Frontend**: React 18 + React Router v6, Axios, Socket.io-client, Chart.js (`react-chartjs-2`), React Toastify. Bootstrapeado con `react-scripts` (Create React App).
-- **Base de datos**: MySQL 8+ (esquema base en `database/constructora.sql` más dos migraciones incrementales).
-- **Despliegue**: todo en Railway — un proyecto (`app-constructora`) con 3 servicios: `constructora-backend`, `constructora-frontend` (sitio estático, build de React) y `MySQL`. Conectado al repo de GitHub para redeploy automático en cada push a `master`.
-
-**URLs en vivo:**
-- Frontend: https://constructora-frontend-production-7d81.up.railway.app
-- Backend / API: https://constructora-backend-production-2f24.up.railway.app
+- **Backend + frontend**: Python 3 + Flask (monolítico, sin API separada) — Jinja2 + Bootstrap 5 para las plantillas, responsivo de fábrica.
+- **Base de datos**: MySQL 8+, vía SQLAlchemy (`Flask-SQLAlchemy`) + `PyMySQL`.
+- **Auth**: `Flask-Login` con sesiones de cookie `HttpOnly`/`Secure` (no JWT en `localStorage`), contraseñas con `Flask-Bcrypt`, `Flask-WTF` para CSRF, `Flask-Limiter` contra fuerza bruta en los dos logins (interno y portal).
+- **Despliegue**: Railway — un servicio Python (Gunicorn) + un servicio MySQL, en el mismo proyecto, conectado al repo de GitHub.
 
 ---
 
@@ -48,93 +32,63 @@ Aplicación web fullstack para administrar la operación de una empresa construc
 
 ```
 04 proyecto-constructora/
-├── backend/
-│   ├── server.js            # Express + Socket.io, registro de rutas /api/*
-│   ├── db.js                # Conexión MySQL (soporta variables DB_* y MYSQL* de Railway)
-│   ├── middleware/
-│   │   ├── auth.js          # Verificación de JWT
-│   │   └── roles.js         # Control de acceso por rol
-│   ├── routes/               # usuarios, obras, presupuestos, clientes, gastos, avance,
-│   │                         # pagos, proveedores, tareas, bitacora, tablero,
-│   │                         # estimaciones, documentos, portal, admin
-│   └── package.json
-├── frontend/
-│   ├── public/
-│   └── src/
-│       ├── App.js, AuthContext.js, PortalAuthContext.js
-│       ├── components/       # Dashboard, TableroEjecutivo, Obras, ObraDetalle,
-│       │                     # Clientes, Proveedores, Presupuestos,
-│       │                     # AlertasTiempoReal, PerfilUsuario, AdminPanel, Login
-│       └── portal/           # PortalLogin, PortalObras, PortalObraDetalle (vista del cliente)
-└── database/
-    ├── constructora.sql               # Esquema base (usuarios, presupuestos, alertas)
-    ├── migraciones/
-    │   ├── v2_ampliacion.sql          # clientes, obras, gastos, avance_obra, pagos_cliente,
-    │   │                              # proveedores, ordenes_compra, tareas, bitacora
-    │   └── v3_diferenciadores.sql     # catalogo_materiales, estimaciones, estimacion_items,
-    │                                  # documentos, clientes_acceso
-    ├── generar_hashes.py              # Genera hashes bcrypt para usuarios de ejemplo
-    ├── fix_passwords.py               # Utilidad para corregir contraseñas existentes
-    └── generar_acceso_cliente.py      # Genera hash + INSERT para acceso del portal cliente
+├── config.py                # Config (producción) y TestConfig (SQLite en memoria)
+├── wsgi.py                  # punto de entrada (gunicorn wsgi:app)
+├── seed.py                  # recrea el esquema y carga datos de ejemplo de los 4 roles
+├── requirements.txt
+├── constructora/
+│   ├── __init__.py          # app factory, blueprints, manejo de errores, `flask init-db`
+│   ├── extensions.py        # db, bcrypt, csrf, login_manager, limiter
+│   ├── models.py            # todo el esquema (SQLAlchemy)
+│   ├── forms.py             # formularios WTForms
+│   ├── decorators.py        # roles_requeridos(), solo_cliente_portal()
+│   ├── auth.py               # login/logout interno
+│   ├── portal.py             # login/logout + vistas de solo lectura del cliente
+│   ├── main.py                # dashboard
+│   ├── clientes.py, levantamientos.py, cotizaciones.py, obras.py,
+│   │   trabajadores.py, usuarios.py   # un blueprint por dominio
+│   └── templates/            # Jinja2 + Bootstrap 5
+└── tests/                    # pytest — flujo completo, aislamiento por obra y por cliente
 ```
 
 ---
 
 ## Cómo instalar y ejecutar en local
 
-### 1. Base de datos (MySQL 8+)
-
 ```bash
-mysql -u root -p < database/constructora.sql
-mysql -u root -p < database/migraciones/v2_ampliacion.sql
-mysql -u root -p < database/migraciones/v3_diferenciadores.sql
+# 1. Entorno virtual e instalación
+python -m venv venv
+venv\Scripts\activate          # Windows (Linux/Mac: source venv/bin/activate)
+pip install -r requirements.txt
 
-# Genera hashes reales para las contraseñas de los usuarios de ejemplo
-pip3 install bcrypt
-python3 database/generar_hashes.py
-# Copia el INSERT generado y reemplaza el que trae el SQL base
+# 2. Variables de entorno
+copy .env.example .env         # define SECRET_KEY, DB_* con tus datos de MySQL local
+# En local (HTTP, sin TLS) deja SESSION_COOKIE_SECURE=false en .env
+
+# 3. Base de datos — dos opciones
+python -m flask --app wsgi init-db     # crea las tablas, sin datos de ejemplo
+# — o, para un escenario de prueba completo con los 4 roles —
+python seed.py                          # OJO: borra y recrea todo el esquema
+
+# 4. Levantar la app
+python wsgi.py
+# http://localhost:5000
 ```
 
-### 2. Backend
+### Pruebas
 
 ```bash
-cd backend
-cp .env.example .env
-# Completa .env con tus credenciales de MySQL y un JWT_SECRET propio
-npm install
-npm run dev      # con nodemon, o "npm start" para producción
-# Servidor en http://localhost:3001
+pytest tests/ -v
 ```
 
-### 3. Frontend
-
-```bash
-cd frontend
-npm install
-npm start
-# App en http://localhost:3000 (usa el proxy definido en package.json hacia el backend)
-```
-
-### 4. Acceso al portal del cliente
-
-El acceso de un cliente al portal se crea manualmente:
-
-```bash
-python3 database/generar_acceso_cliente.py
-```
-
-Esto genera el hash bcrypt y el `INSERT` para la tabla `clientes_acceso`.
+Corren contra SQLite en memoria (`config.TestConfig`), no requieren MySQL.
 
 ---
 
 ## Notas relevantes
 
-- **Variables de entorno del backend** (`backend/.env`, ver `backend/.env.example`): `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `PORT`. En despliegues sobre Railway, `db.js` también acepta las variables inyectadas automáticamente `MYSQLHOST`, `MYSQLUSER`, `MYSQLPASSWORD`, `MYSQLDATABASE`, `MYSQLPORT`.
-- **Variable de entorno del frontend** (`frontend/.env.example`): `REACT_APP_API_URL`, solo necesaria en producción; en local el proxy de `package.json` redirige `/api` a `http://localhost:3001`.
-- **Variables obligatorias**: `DB_PASSWORD` (o `MYSQLPASSWORD`) y `JWT_SECRET` ya no tienen un *fallback* hardcodeado — `backend/db.js`, `backend/middleware/auth.js`, `backend/routes/usuarios.js` y `backend/routes/portal.js` lanzan un error al arrancar si no están definidas. Configúralas siempre en `.env` (ver `backend/.env.example`) antes de iniciar el servidor.
-- **Sin almacenamiento binario de archivos**: el módulo de documentos guarda solo la referencia (`url_archivo`); se recomienda integrarlo con un servicio externo (S3, Google Drive, disco del servidor) para el archivo real.
-- **Sin pruebas automatizadas**: no se detectaron suites de test en backend ni frontend.
-- **CORS y Socket.io** están controlados por la variable `FRONTEND_URL`; si no se define, se abre a cualquier origen (`*`), lo cual es aceptable solo en desarrollo local.
-- **No copiar contraseñas reales**: los archivos `.env` están correctamente excluidos en `.gitignore` (`.env`, `*/.env`); usa siempre `.env.example` como referencia de las variables requeridas.
-- **Seguridad de login**: `POST /api/usuarios/login` y `POST /api/portal/login` tienen un límite de 8 intentos por IP cada 15 minutos (`backend/middleware/loginLimiter.js`, agregado junto con `helmet` en la revisión de seguridad de 2026-08-21 — detalle completo en `INFORME_ANALISIS_Y_MANUAL_USUARIO.md`).
-- **Contraseñas de ejemplo**: las credenciales de prueba (admin/supervisor/empleado/portal) que trae el proyecto están documentadas únicamente en `INFORME_ANALISIS_Y_MANUAL_USUARIO.md` — cámbialas o elimina esas cuentas antes de exponer el sistema a internet.
+- **Variables de entorno** (ver `.env.example`): `SECRET_KEY`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `SESSION_COOKIE_SECURE`. La app **no arranca** si falta `SECRET_KEY` o `DB_PASSWORD` — no hay valores por defecto inseguros.
+- **`seed.py` es destructivo**: borra todas las tablas antes de recrear el escenario de ejemplo. Está pensado para desarrollo local y para la primera carga de datos de demo — nunca correrlo contra una base con datos reales de clientes.
+- **Sin almacenamiento binario de archivos**: el módulo de documentos guarda solo la referencia (`url_archivo`); falta integrarlo con un servicio externo (S3, disco, etc.) para el archivo real.
+- **Pruebas automatizadas**: sí existen (`tests/`), cubren el flujo cliente→levantamiento→cotización→obra, el aislamiento de datos entre obras, y el aislamiento del portal entre clientes. No hay cobertura de exportación de reportes ni de otros módulos de "fase 2" (ver el informe) porque todavía no existen.
+- **No copiar contraseñas reales**: `.env` está excluido en `.gitignore`; usa siempre `.env.example` como referencia.

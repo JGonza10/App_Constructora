@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block titulo %}{{ cliente.nombre }}{% endblock %}
+{% block contenido %}
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between align-items-start">
+    <div>
+      <h3 class="mb-1">{{ cliente.nombre }}</h3>
+      <p class="text-muted text-capitalize mb-0">{{ cliente.tipo.replace("_", " ") }}</p>
+      {% if cliente.email %}<p class="mb-0 small">✉️ {{ cliente.email }}</p>{% endif %}
+      {% if cliente.telefono %}<p class="mb-0 small">📞 {{ cliente.telefono }}</p>{% endif %}
+    </div>
+    <a href="{{ url_for('levantamientos.nuevo', cliente_id=cliente.id) }}" class="btn btn-primary">+ Nuevo levantamiento</a>
+  </div>
+</div>
+
+<h5>Levantamientos</h5>
+{% if not cliente.levantamientos %}
+<p class="text-muted">Todavía no hay ningún levantamiento para este cliente.</p>
+{% else %}
+<div class="list-group mb-4">
+  {% for l in cliente.levantamientos %}
+  <a href="{{ url_for('levantamientos.detalle', levantamiento_id=l.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+    <span>{{ l.titulo }}</span>
+    <span class="badge bg-secondary badge-estado">{{ l.estado }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h5>Obras</h5>
+{% if not cliente.obras %}
+<p class="text-muted">Este cliente todavía no tiene ninguna obra activa.</p>
+{% else %}
+<div class="list-group">
+  {% for o in cliente.obras %}
+  <a href="{{ url_for('obras.detalle', obra_id=o.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+    <span>{{ o.nombre }}</span>
+    <span class="badge bg-primary badge-estado">{{ o.estado }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

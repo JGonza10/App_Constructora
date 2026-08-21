@@ -1,17 +1,18 @@
-# Dependencias
-node_modules/
-*/node_modules/
+# Entorno virtual / dependencias
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
 
 # Variables de entorno (NUNCA subir credenciales)
 .env
 */.env
 
-# Build de producción
-build/
-dist/
+# Base de datos local
+*.db
+instance/
 
 # Logs
-npm-debug.log*
 *.log
 
 # Sistema operativo

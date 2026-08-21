@@ -1,0 +1,21 @@
+{% macro campo(field, col="col-12") %}
+<div class="{{ col }} mb-3">
+  {{ field.label(class="form-label fw-semibold") }}
+  {% if field.type == "TextAreaField" %}
+    {{ field(class="form-control" + (" is-invalid" if field.errors else ""), rows=3) }}
+  {% elif field.type == "BooleanField" %}
+    <div class="form-check">
+      {{ field(class="form-check-input") }}
+    </div>
+  {% else %}
+    {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+  {% endif %}
+  {% for error in field.errors %}
+    <div class="invalid-feedback d-block">{{ error }}</div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro boton_siguiente(url, texto, variante="primary") %}
+<a href="{{ url }}" class="btn btn-{{ variante }} btn-lg w-100 mb-2">{{ texto }} →</a>
+{% endmacro %}

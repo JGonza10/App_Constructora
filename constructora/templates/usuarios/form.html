@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nuevo usuario{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>🔑 Nuevo usuario interno</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.nombre, "col-md-6") }}
+      {{ campo(form.email, "col-md-6") }}
+      {{ campo(form.password, "col-md-6") }}
+      {{ campo(form.rol, "col-md-6") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Crear usuario</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block titulo %}{{ obra.nombre }}{% endblock %}
+{% block contenido %}
+
+<div class="card p-4 mb-4">
+  <div class="d-flex justify-content-between flex-wrap">
+    <div>
+      <span class="badge bg-primary badge-estado mb-2">{{ obra.estado }}</span>
+      <h3 class="mb-1">{{ obra.nombre }}</h3>
+      <p class="text-muted mb-0">👤 {{ obra.cliente.nombre }} · 📍 {{ obra.direccion or "sin dirección" }}</p>
+      {% if obra.responsable %}<p class="text-muted small mb-0">Responsable: {{ obra.responsable.nombre }}</p>{% endif %}
+    </div>
+    <div class="text-end">
+      <div class="text-muted small">Contrato</div>
+      <div class="fs-4 fw-bold">${{ "{:,.2f}".format(obra.monto_contrato) }}</div>
+    </div>
+  </div>
+  <div class="progress mt-3" style="height:10px;">
+    <div class="progress-bar" style="width: {{ obra.avance_porcentaje }}%"></div>
+  </div>
+</div>
+
+<div class="row mb-4 text-center">
+  <div class="col-md-3"><div class="card p-3"><div class="fs-5 fw-bold">${{ "{:,.2f}".format(obra.gasto_materiales_y_otros) }}</div><div class="text-muted small">Materiales / otros</div></div></div>
+  <div class="col-md-3"><div class="card p-3"><div class="fs-5 fw-bold">${{ "{:,.2f}".format(obra.gasto_mano_obra) }}</div><div class="text-muted small">Mano de obra</div></div></div>
+  <div class="col-md-3"><div class="card p-3"><div class="fs-5 fw-bold {{ 'text-danger' if obra.saldo_presupuesto < 0 else 'text-success' }}">${{ "{:,.2f}".format(obra.saldo_presupuesto) }}</div><div class="text-muted small">Saldo disponible</div></div></div>
+  <div class="col-md-3"><div class="card p-3"><div class="fs-5 fw-bold">{{ obra.tareas|rejectattr("estado", "equalto", "terminada")|list|length }}</div><div class="text-muted small">Tareas pendientes</div></div></div>
+</div>
+
+<!-- GASTOS -->
+<div class="card p-3 mb-3" id="gastos">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">💵 Gastos de materiales / otros</h5>
+    <a href="{{ url_for('obras.nuevo_gasto', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a></div>
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Monto</th></tr></thead>
+    <tbody>
+      {% for g in obra.gastos %}
+      <tr><td>{{ g.fecha.strftime("%d/%m/%Y") }}</td><td class="text-capitalize">{{ g.categoria }}</td><td>{{ g.concepto }}</td><td>${{ "{:,.2f}".format(g.monto) }}</td></tr>
+      {% else %}<tr><td colspan="4" class="text-muted text-center">Sin gastos registrados.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- MANO DE OBRA -->
+<div class="card p-3 mb-3" id="mano-de-obra">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">👷 Pagos de mano de obra</h5>
+    <a href="{{ url_for('obras.nuevo_pago_mano_obra', obra_id=obra.id) }}" class="btn btn-sm btn-success">+ Nuevo</a></div>
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Fecha</th><th>Trabajador</th><th>Oficio</th><th>Concepto</th><th>Monto</th></tr></thead>
+    <tbody>
+      {% for p in obra.pagos_mano_obra %}
+      <tr><td>{{ p.fecha.strftime("%d/%m/%Y") }}</td><td>{{ p.trabajador.nombre }}</td><td class="text-capitalize">{{ p.trabajador.oficio }}</td><td>{{ p.concepto }}</td><td>${{ "{:,.2f}".format(p.monto) }}</td></tr>
+      {% else %}<tr><td colspan="5" class="text-muted text-center">Sin pagos de mano de obra todavía.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- AVANCE -->
+<div class="card p-3 mb-3" id="avance">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">📈 Avance semanal</h5>
+    <a href="{{ url_for('obras.nuevo_avance', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a></div>
+  {% for a in obra.avances %}
+  <div class="d-flex justify-content-between border-bottom py-2">
+    <div><strong>{{ a.etapa }}</strong> — {{ a.semana.strftime("%d/%m/%Y") }}
+      {% if a.descripcion %}<div class="text-muted small">{{ a.descripcion }}</div>{% endif %}</div>
+    <span class="fw-bold text-primary">{{ a.porcentaje }}%</span>
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin avances registrados.</p>{% endfor %}
+</div>
+
+<!-- TAREAS -->
+<div class="card p-3 mb-3" id="tareas">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">✅ Tareas</h5>
+    <a href="{{ url_for('obras.nueva_tarea', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nueva</a></div>
+  {% for t in obra.tareas %}
+  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+    <div><strong>{{ t.titulo }}</strong>{% if t.fecha_fin %}<div class="text-muted small">Vence: {{ t.fecha_fin.strftime("%d/%m/%Y") }}</div>{% endif %}</div>
+    <form method="post" action="{{ url_for('obras.cambiar_estado_tarea', obra_id=obra.id, tarea_id=t.id) }}">
+      <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="pendiente" {{ "selected" if t.estado=="pendiente" }}>Pendiente</option>
+        <option value="en_curso" {{ "selected" if t.estado=="en_curso" }}>En curso</option>
+        <option value="terminada" {{ "selected" if t.estado=="terminada" }}>Terminada</option>
+      </select>
+    </form>
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin tareas registradas.</p>{% endfor %}
+</div>
+
+<!-- BITACORA -->
+<div class="card p-3 mb-3" id="bitacora">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">📓 Bitácora diaria</h5>
+    <a href="{{ url_for('obras.nueva_bitacora', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo registro</a></div>
+  {% for b in obra.bitacora %}
+  <div class="border-bottom py-2">
+    <strong>{{ b.fecha.strftime("%A %d de %B") }}</strong>
+    <div class="small">👷 {{ b.personal_en_obra or 0 }} personas · {{ b.clima }}</div>
+    <div class="small">{{ b.actividades }}</div>
+    {% if b.incidencias %}<div class="small text-danger">⚠️ {{ b.incidencias }}</div>{% endif %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin bitácora registrada.</p>{% endfor %}
+</div>
+
+<!-- DOCUMENTOS -->
+<div class="card p-3 mb-3" id="documentos">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">📁 Documentos</h5>
+    <a href="{{ url_for('obras.nuevo_documento', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a></div>
+  {% for d in obra.documentos %}
+  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+    <div><strong>{{ d.nombre }}</strong><div class="text-muted small text-capitalize">{{ d.categoria }}</div></div>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <form method="post" action="{{ url_for('obras.toggle_visibilidad_documento', obra_id=obra.id, documento_id=d.id) }}">
+      <button class="btn btn-sm btn-outline-secondary">{{ "👁️ Visible al cliente" if d.visible_cliente else "🔒 Oculto" }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin documentos registrados.</p>{% endfor %}
+</div>
+
+<!-- PAGOS CLIENTE -->
+<div class="card p-3 mb-3" id="pagos">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">💰 Calendario de pagos del cliente</h5>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <a href="{{ url_for('obras.nuevo_pago_cliente', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a>
+    {% endif %}
+  </div>
+  {% for p in obra.pagos_cliente %}
+  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+    <div><strong>{{ p.concepto }}</strong> — ${{ "{:,.2f}".format(p.monto) }}
+      <div class="text-muted small">Programado: {{ p.fecha_programada.strftime("%d/%m/%Y") }}</div></div>
+    {% if p.estado == "recibido" %}
+      <span class="text-success fw-bold">✓ Recibido</span>
+    {% elif current_user.rol in ("admin", "supervisor") %}
+      <form method="post" action="{{ url_for('obras.marcar_pago_recibido', obra_id=obra.id, pago_id=p.id) }}">
+        <button class="btn btn-sm btn-outline-secondary">Marcar recibido</button>
+      </form>
+    {% endif %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin pagos programados.</p>{% endfor %}
+</div>
+
+{% endblock %}

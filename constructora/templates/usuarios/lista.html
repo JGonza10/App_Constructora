@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Usuarios{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">🔑 Usuarios internos</h2>
+  {% if current_user.rol == "admin" %}
+  <a href="{{ url_for('usuarios.nuevo') }}" class="btn btn-primary">+ Nuevo usuario</a>
+  {% endif %}
+</div>
+<div class="card">
+  <table class="table mb-0">
+    <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th>{% if current_user.rol == "admin" %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.nombre }}</td><td>{{ u.email }}</td><td class="text-capitalize">{{ u.rol }}</td>
+        <td><span class="badge {{ 'bg-success' if u.activo else 'bg-secondary' }}">{{ "activo" if u.activo else "inactivo" }}</span></td>
+        {% if current_user.rol == "admin" %}
+        <td>
+          <form method="post" action="{{ url_for('usuarios.toggle_estado', usuario_id=u.id) }}">
+            <button class="btn btn-sm btn-outline-secondary">{{ "Desactivar" if u.activo else "Activar" }}</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

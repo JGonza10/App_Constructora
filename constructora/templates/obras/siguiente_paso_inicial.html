@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import boton_siguiente %}
+{% block titulo %}Obra creada{% endblock %}
+{% block contenido %}
+<div class="card p-4 paso-siguiente text-center">
+  <h3>🎉 Obra "{{ obra.nombre }}" en marcha</h3>
+  <p class="text-muted">Contrato por ${{ "{:,.2f}".format(obra.monto_contrato) }}. Paso 4 de 4: registra lo que va pasando en campo.</p>
+  <div class="row">
+    <div class="col-md-6">
+      {{ boton_siguiente(url_for('obras.nuevo_gasto', obra_id=obra.id), "Registrar un gasto de materiales") }}
+    </div>
+    <div class="col-md-6">
+      {{ boton_siguiente(url_for('obras.nuevo_pago_mano_obra', obra_id=obra.id), "Registrar un pago de mano de obra", "success") }}
+    </div>
+  </div>
+  <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary mt-2">Ir directo al resumen de la obra</a>
+</div>
+{% endblock %}

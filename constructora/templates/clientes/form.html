@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>{{ titulo }}</h3>
+  <p class="text-muted">Paso 1 de 4: registra al cliente. Después vamos a capturar qué te pidió.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.nombre, "col-md-8") }}
+      {{ campo(form.tipo, "col-md-4") }}
+      {{ campo(form.email, "col-md-6") }}
+      {{ campo(form.telefono, "col-md-3") }}
+      {{ campo(form.rfc, "col-md-3") }}
+      {{ campo(form.direccion, "col-12") }}
+      {{ campo(form.notas, "col-12") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar y continuar →</button>
+  </form>
+</div>
+{% endblock %}

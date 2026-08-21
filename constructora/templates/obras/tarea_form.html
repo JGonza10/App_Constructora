@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nueva tarea{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>✅ Nueva tarea — {{ obra.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.titulo, "col-12") }}
+      {{ campo(form.descripcion, "col-12") }}
+      {{ campo(form.responsable_id, "col-md-4") }}
+      {{ campo(form.fecha_inicio, "col-md-4") }}
+      {{ campo(form.fecha_fin, "col-md-4") }}
+      {{ campo(form.prioridad, "col-md-4") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Crear tarea</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

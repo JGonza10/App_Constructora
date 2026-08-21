@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import boton_siguiente %}
+{% block titulo %}¿Qué sigue?{% endblock %}
+{% block contenido %}
+<div class="card p-4 paso-siguiente text-center">
+  <h3>✅ Registrado en "{{ obra.nombre }}"</h3>
+  <p class="text-muted">¿Qué quieres hacer ahora?</p>
+
+  {% if tipo == "gasto" %}
+    {{ boton_siguiente(url_for('obras.nuevo_gasto', obra_id=obra.id), "Registrar otro gasto de materiales") }}
+    {{ boton_siguiente(url_for('obras.nuevo_pago_mano_obra', obra_id=obra.id), "Registrar un pago de mano de obra", "success") }}
+  {% elif tipo == "mano_obra" %}
+    {{ boton_siguiente(url_for('obras.nuevo_pago_mano_obra', obra_id=obra.id), "Registrar otro pago de mano de obra", "success") }}
+    {{ boton_siguiente(url_for('obras.nuevo_gasto', obra_id=obra.id), "Registrar un gasto de materiales") }}
+  {% elif tipo == "avance" %}
+    {{ boton_siguiente(url_for('obras.nueva_bitacora', obra_id=obra.id), "Registrar bitácora de hoy") }}
+    {{ boton_siguiente(url_for('obras.nuevo_avance', obra_id=obra.id), "Registrar otro avance", "secondary") }}
+  {% elif tipo == "bitacora" %}
+    {{ boton_siguiente(url_for('obras.nuevo_gasto', obra_id=obra.id), "Registrar un gasto de hoy") }}
+    {{ boton_siguiente(url_for('obras.nueva_tarea', obra_id=obra.id), "Crear una tarea pendiente", "secondary") }}
+  {% elif tipo == "tarea" %}
+    {{ boton_siguiente(url_for('obras.nueva_tarea', obra_id=obra.id), "Crear otra tarea") }}
+  {% elif tipo == "documento" %}
+    {{ boton_siguiente(url_for('obras.nuevo_documento', obra_id=obra.id), "Subir otro documento") }}
+  {% elif tipo == "pago_cliente" %}
+    {{ boton_siguiente(url_for('obras.nuevo_pago_cliente', obra_id=obra.id), "Programar otro pago del cliente") }}
+  {% endif %}
+
+  <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary mt-2">Ir al resumen de la obra</a>
+</div>
+{% endblock %}

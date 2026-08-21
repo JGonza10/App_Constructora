@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Hola, {{ current_user.nombre.split(" ")[0] }} 👋</h2>
+  <a href="{{ url_for('clientes.nuevo') }}" class="btn btn-primary">+ Empezar un proyecto nuevo</a>
+</div>
+<p class="text-muted">Todo proyecto arranca igual: cliente → levantamiento → cotización → obra.</p>
+
+{% if kpis %}
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <div class="fs-4 fw-bold">${{ "{:,.2f}".format(kpis.monto_contratado) }}</div>
+      <div class="text-muted small">Contratado (obras activas)</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <div class="fs-4 fw-bold">${{ "{:,.2f}".format(kpis.gasto_real) }}</div>
+      <div class="text-muted small">Gastado (materiales + mano de obra)</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <div class="fs-4 fw-bold">{{ kpis.obras_activas }}</div>
+      <div class="text-muted small">Obras activas</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <div class="card p-3">
+      <h5>📋 Levantamientos sin cotizar</h5>
+      {% if not levantamientos_abiertos %}
+        <p class="text-muted mb-0">No hay levantamientos pendientes de cotización.</p>
+      {% else %}
+        <ul class="list-group list-group-flush">
+          {% for l in levantamientos_abiertos %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <a href="{{ url_for('levantamientos.detalle', levantamiento_id=l.id) }}">{{ l.titulo }}</a>
+              <div class="text-muted small">{{ l.cliente.nombre }} · {{ l.estado }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-md-6 mb-4">
+    <div class="card p-3">
+      <h5>⏳ Cotizaciones esperando respuesta del cliente</h5>
+      {% if not cotizaciones_pendientes %}
+        <p class="text-muted mb-0">No hay cotizaciones enviadas pendientes.</p>
+      {% else %}
+        <ul class="list-group list-group-flush">
+          {% for c in cotizaciones_pendientes %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <a href="{{ url_for('cotizaciones.detalle', cotizacion_id=c.id) }}">{{ c.titulo }} (v{{ c.version }})</a>
+              <div class="text-muted small">{{ c.levantamiento.cliente.nombre }} · ${{ "{:,.2f}".format(c.total) }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card p-3">
+  <h5>🏗️ Obras activas</h5>
+  {% if not obras_activas %}
+    <p class="text-muted mb-0">Todavía no hay ninguna obra activa. Empieza dando de alta un cliente.</p>
+  {% else %}
+    <div class="row">
+      {% for o in obras_activas %}
+      <div class="col-md-4 mb-3">
+        <a href="{{ url_for('obras.detalle', obra_id=o.id) }}" class="text-decoration-none text-dark">
+          <div class="card p-3 h-100">
+            <div class="fw-bold">{{ o.nombre }}</div>
+            <div class="text-muted small">{{ o.cliente.nombre }}</div>
+            <div class="progress mt-2" style="height:8px;">
+              <div class="progress-bar" style="width: {{ o.avance_porcentaje }}%"></div>
+            </div>
+            <div class="text-muted small mt-1">{{ o.avance_porcentaje }}% avance</div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

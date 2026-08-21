@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Obras{% endblock %}
+{% block contenido %}
+<h2 class="mb-3">🏗️ Obras</h2>
+<p class="text-muted">Las obras nacen solas al aceptar una cotización — no hay botón de "nueva obra" directo.</p>
+
+<div class="btn-group mb-3">
+  {% for e in ["todas", "activa", "pausada", "terminada", "cancelada"] %}
+  <a href="{{ url_for('obras.lista', estado=e) }}" class="btn btn-sm btn-outline-secondary {{ 'active' if filtro == e else '' }}">{{ e }}</a>
+  {% endfor %}
+</div>
+
+<div class="row">
+  {% for o in obras %}
+  <div class="col-md-4 mb-3">
+    <a href="{{ url_for('obras.detalle', obra_id=o.id) }}" class="text-decoration-none text-dark">
+      <div class="card p-3 h-100">
+        <div class="d-flex justify-content-between">
+          <div class="fw-bold">{{ o.nombre }}</div>
+          <span class="badge bg-primary badge-estado">{{ o.estado }}</span>
+        </div>
+        <div class="text-muted small">👤 {{ o.cliente.nombre }}</div>
+        <div class="progress mt-2" style="height:8px;">
+          <div class="progress-bar" style="width: {{ o.avance_porcentaje }}%"></div>
+        </div>
+        <div class="d-flex justify-content-between small mt-2">
+          <span>Contrato: <strong>${{ "{:,.2f}".format(o.monto_contrato) }}</strong></span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span>Gastado: {{ o.pct_gasto }}%</span>
+          <span class="{{ 'text-danger' if o.saldo_presupuesto < 0 else 'text-success' }}">Saldo: ${{ "{:,.2f}".format(o.saldo_presupuesto) }}</span>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% else %}
+  <p class="text-muted">No hay obras en este filtro.</p>
+  {% endfor %}
+</div>
+{% endblock %}
