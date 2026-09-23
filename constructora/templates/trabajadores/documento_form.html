@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nuevo documento{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>📁 Nuevo documento — {{ trabajador.nombre }}</h3>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.nombre, "col-md-8") }}
+      {{ campo(form.categoria, "col-md-4") }}
+      {{ campo(form.archivo, "col-12") }}
+      {{ campo(form.fecha_vencimiento, "col-md-6") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('trabajadores.detalle', trabajador_id=trabajador.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

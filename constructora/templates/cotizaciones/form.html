@@ -12,7 +12,31 @@
       {{ campo(form.notas, "col-12") }}
     </div>
 
+    {% if plantillas %}
+    <div class="input-group input-group-sm mb-3" style="max-width:500px">
+      <label class="input-group-text" for="plantilla_id">Cargar plantilla</label>
+      <select name="plantilla_id" id="plantilla_id" class="form-select">
+        <option value="">— elige una plantilla para reemplazar los conceptos —</option>
+        {% for p in plantillas %}
+        <option value="{{ p.id }}">{{ p.nombre }} ({{ p.tipo_obra }})</option>
+        {% endfor %}
+      </select>
+      <button type="submit" name="accion" value="cargar_plantilla" class="btn btn-outline-secondary">Cargar</button>
+    </div>
+    {% endif %}
+
     <h6 class="mt-3">Conceptos</h6>
+    {% if catalogo %}
+    <div class="input-group input-group-sm mb-2" style="max-width:500px">
+      <label class="input-group-text" for="selector-catalogo">Del catálogo</label>
+      <select id="selector-catalogo" class="form-select">
+        <option value="">— elige un concepto para rellenar la última línea —</option>
+        {% for c in catalogo %}
+        <option value="{{ c.id }}">{{ c.concepto }} (${{ "{:,.2f}".format(c.precio_unitario) }} / {{ c.unidad }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <div class="table-responsive">
     <table class="table align-middle">
       <thead>
@@ -31,6 +55,22 @@
     </table>
     </div>
     <button type="submit" name="accion" value="agregar_linea" class="btn btn-outline-secondary btn-sm mb-3">+ Agregar línea</button>
+
+    {% if catalogo %}
+    <script>
+      const CATALOGO = {{ catalogo_json|safe }};
+      document.getElementById("selector-catalogo").addEventListener("change", function () {
+        const item = CATALOGO[this.value];
+        if (!item) return;
+        const filas = document.querySelectorAll("tbody tr");
+        const ultima = filas[filas.length - 1];
+        ultima.querySelector("td:nth-child(1) input").value = item.concepto;
+        ultima.querySelector("td:nth-child(2) input").value = item.unidad;
+        ultima.querySelector("td:nth-child(4) input").value = item.precio_unitario;
+        this.value = "";
+      });
+    </script>
+    {% endif %}
 
     <div class="d-flex justify-content-end">
       <button type="submit" class="btn btn-primary">Guardar cotización (borrador) →</button>

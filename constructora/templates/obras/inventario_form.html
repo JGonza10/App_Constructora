@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Movimiento de inventario{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>📦 Movimiento de inventario — {{ obra.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.tipo, "col-md-4") }}
+      {{ campo(form.material, "col-md-8") }}
+      {{ campo(form.cantidad, "col-md-4") }}
+      {{ campo(form.unidad, "col-md-4") }}
+      {{ campo(form.fecha, "col-md-4") }}
+      {{ campo(form.motivo, "col-12") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Registrar movimiento</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id, _anchor='inventario') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

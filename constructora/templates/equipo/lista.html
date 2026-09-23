@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block titulo %}Equipo y maquinaria{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">🚜 Equipo y maquinaria</h2>
+  {% if current_user.rol in ("admin", "supervisor") %}
+  <a href="{{ url_for('equipo.nuevo') }}" class="btn btn-primary">+ Nuevo equipo</a>
+  {% endif %}
+</div>
+<div class="card">
+  <table class="table mb-0">
+    <thead><tr><th>Nombre</th><th>Tipo</th><th>Propiedad</th><th>Costo renta/día</th></tr></thead>
+    <tbody>
+      {% for e in equipos %}
+      <tr>
+        <td>{{ e.nombre }}</td>
+        <td>{{ e.tipo or "—" }}</td>
+        <td>{{ "Propio" if e.propio else "Rentado" }}</td>
+        <td>{{ "${:,.2f}".format(e.costo_renta_diario) if e.costo_renta_diario else "—" }}</td>
+      </tr>
+      {% else %}<tr><td colspan="4" class="text-muted text-center py-4">No hay equipo registrado.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

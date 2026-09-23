@@ -13,6 +13,9 @@
     <div class="text-end">
       <div class="text-muted small">Contrato</div>
       <div class="fs-4 fw-bold">${{ "{:,.2f}".format(obra.monto_contrato) }}</div>
+      {% if current_user.rol in ("admin", "supervisor") %}
+      <a href="{{ url_for('obras.reporte_cierre', obra_id=obra.id) }}" class="small">Ver reporte de rentabilidad →</a>
+      {% endif %}
     </div>
   </div>
   <div class="progress mt-3" style="height:10px;">
@@ -27,10 +30,37 @@
   <div class="col-md-3"><div class="card p-3"><div class="fs-5 fw-bold">{{ obra.tareas|rejectattr("estado", "equalto", "terminada")|list|length }}</div><div class="text-muted small">Tareas pendientes</div></div></div>
 </div>
 
+{% if flujo_caja.etiquetas %}
+<!-- FLUJO DE CAJA -->
+<div class="card p-3 mb-4" id="flujo-caja">
+  <h5 class="mb-2">📊 Flujo de caja mensual</h5>
+  <canvas id="grafica-flujo-caja" height="90"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  new Chart(document.getElementById("grafica-flujo-caja"), {
+    type: "bar",
+    data: {
+      labels: {{ flujo_caja.etiquetas|tojson }},
+      datasets: [
+        { label: "Ingresos (pagos recibidos)", data: {{ flujo_caja.ingresos|tojson }}, backgroundColor: "#198754" },
+        { label: "Egresos (gastos + mano de obra)", data: {{ flujo_caja.egresos|tojson }}, backgroundColor: "#dc3545" },
+      ],
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } },
+  });
+</script>
+{% endif %}
+
 <!-- GASTOS -->
 <div class="card p-3 mb-3" id="gastos">
   <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">💵 Gastos de materiales / otros</h5>
-    <a href="{{ url_for('obras.nuevo_gasto', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a></div>
+    <div class="d-flex gap-2">
+      {% if current_user.rol in ("admin", "supervisor") %}
+      <a href="{{ url_for('obras.exportar_gastos_csv', obra_id=obra.id) }}" class="btn btn-sm btn-outline-secondary">⬇ CSV</a>
+      {% endif %}
+      <a href="{{ url_for('obras.nuevo_gasto', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a>
+    </div>
   <table class="table table-sm mb-0">
     <thead><tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Monto</th></tr></thead>
     <tbody>
@@ -76,6 +106,7 @@
   <div class="d-flex justify-content-between align-items-center border-bottom py-2">
     <div><strong>{{ t.titulo }}</strong>{% if t.fecha_fin %}<div class="text-muted small">Vence: {{ t.fecha_fin.strftime("%d/%m/%Y") }}</div>{% endif %}</div>
     <form method="post" action="{{ url_for('obras.cambiar_estado_tarea', obra_id=obra.id, tarea_id=t.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()">
         <option value="pendiente" {{ "selected" if t.estado=="pendiente" }}>Pendiente</option>
         <option value="en_curso" {{ "selected" if t.estado=="en_curso" }}>En curso</option>
@@ -96,6 +127,15 @@
     <div class="small">👷 {{ b.personal_en_obra or 0 }} personas · {{ b.clima }}</div>
     <div class="small">{{ b.actividades }}</div>
     {% if b.incidencias %}<div class="small text-danger">⚠️ {{ b.incidencias }}</div>{% endif %}
+    {% if b.fotos %}
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      {% for foto in b.fotos %}
+      <a href="{{ url_for('obras.ver_foto_bitacora', obra_id=obra.id, foto_id=foto.id) }}" target="_blank">
+        <img src="{{ url_for('obras.ver_foto_bitacora', obra_id=obra.id, foto_id=foto.id) }}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;">
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
   {% else %}<p class="text-muted text-center mb-0">Sin bitácora registrada.</p>{% endfor %}
 </div>
@@ -106,9 +146,13 @@
     <a href="{{ url_for('obras.nuevo_documento', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a></div>
   {% for d in obra.documentos %}
   <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-    <div><strong>{{ d.nombre }}</strong><div class="text-muted small text-capitalize">{{ d.categoria }}</div></div>
+    <div>
+      <a href="{{ url_for('obras.descargar_documento', obra_id=obra.id, documento_id=d.id) }}"><strong>{{ d.nombre }}</strong></a>
+      <div class="text-muted small text-capitalize">{{ d.categoria }}</div>
+    </div>
     {% if current_user.rol in ("admin", "supervisor") %}
     <form method="post" action="{{ url_for('obras.toggle_visibilidad_documento', obra_id=obra.id, documento_id=d.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-sm btn-outline-secondary">{{ "👁️ Visible al cliente" if d.visible_cliente else "🔒 Oculto" }}</button>
     </form>
     {% endif %}
@@ -131,11 +175,150 @@
       <span class="text-success fw-bold">✓ Recibido</span>
     {% elif current_user.rol in ("admin", "supervisor") %}
       <form method="post" action="{{ url_for('obras.marcar_pago_recibido', obra_id=obra.id, pago_id=p.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-sm btn-outline-secondary">Marcar recibido</button>
       </form>
     {% endif %}
   </div>
   {% else %}<p class="text-muted text-center mb-0">Sin pagos programados.</p>{% endfor %}
+</div>
+
+<!-- INVENTARIO -->
+<div class="card p-3 mb-3" id="inventario">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">📦 Inventario de materiales</h5>
+    <a href="{{ url_for('obras.nuevo_movimiento_inventario', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Movimiento</a></div>
+  {% set resumen = obra.inventario_resumen() %}
+  {% if resumen %}
+  <div class="row">
+    {% for material, cantidad in resumen.items() %}
+    <div class="col-md-4 mb-2"><div class="border rounded p-2 d-flex justify-content-between"><span>{{ material }}</span><strong>{{ "%.2f"|format(cantidad) }}</strong></div></div>
+    {% endfor %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin movimientos de inventario.</p>{% endif %}
+</div>
+
+<!-- ORDENES DE COMPRA -->
+<div class="card p-3 mb-3" id="compras">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">🧾 Órdenes de compra</h5>
+    <a href="{{ url_for('obras.nueva_orden_compra', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nueva</a></div>
+  {% for o in obra.ordenes_compra %}
+  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+    <div><strong>{{ o.concepto }}</strong> — ${{ "{:,.2f}".format(o.costo_estimado) }}
+      <div class="text-muted small">{{ o.proveedor.nombre if o.proveedor else "sin proveedor" }} · {{ o.fecha_solicitud.strftime("%d/%m/%Y") }}</div></div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-secondary badge-estado">{{ o.estado }}</span>
+      {% if current_user.rol in ("admin", "supervisor") and o.estado in ("solicitada", "confirmada") %}
+      <div class="btn-group btn-group-sm">
+        {% if o.estado == "solicitada" %}
+        <form method="post" action="{{ url_for('obras.confirmar_orden_compra', obra_id=obra.id, orden_id=o.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-secondary">Confirmar</button></form>
+        {% endif %}
+        <form method="post" action="{{ url_for('obras.recibir_orden_compra', obra_id=obra.id, orden_id=o.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-success">Recibir</button></form>
+        <form method="post" action="{{ url_for('obras.cancelar_orden_compra', obra_id=obra.id, orden_id=o.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger">Cancelar</button></form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin órdenes de compra.</p>{% endfor %}
+</div>
+
+<!-- ORDENES DE CAMBIO -->
+<div class="card p-3 mb-3" id="cambios">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">📝 Órdenes de cambio</h5>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <a href="{{ url_for('obras.nueva_orden_cambio', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nueva</a>
+    {% endif %}
+  </div>
+  {% for oc in obra.ordenes_cambio %}
+  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+    <div>{{ oc.descripcion }}<div class="text-muted small">${{ "{:,.2f}".format(oc.monto) }}</div></div>
+    {% if oc.estado == "pendiente" and current_user.rol in ("admin", "supervisor") %}
+    <div class="btn-group btn-group-sm">
+      <form method="post" action="{{ url_for('obras.resolver_orden_cambio', obra_id=obra.id, orden_id=oc.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="aprobada"><button class="btn btn-outline-success">Aprobar</button></form>
+      <form method="post" action="{{ url_for('obras.resolver_orden_cambio', obra_id=obra.id, orden_id=oc.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="decision" value="rechazada"><button class="btn btn-outline-danger">Rechazar</button></form>
+    </div>
+    {% else %}<span class="badge bg-secondary badge-estado">{{ oc.estado }}</span>{% endif %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin órdenes de cambio.</p>{% endfor %}
+</div>
+
+<!-- SEGURIDAD -->
+<div class="card p-3 mb-3" id="seguridad">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">🦺 Seguridad e higiene</h5>
+    <a href="{{ url_for('obras.nuevo_incidente_seguridad', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a></div>
+  {% for i in obra.incidentes_seguridad %}
+  <div class="border-bottom py-2">
+    <span class="badge {{ 'bg-danger' if i.gravedad == 'alta' else ('bg-warning text-dark' if i.gravedad == 'media' else 'bg-secondary') }}">{{ i.tipo.replace("_", " ") }}</span>
+    <span class="text-muted small">{{ i.fecha.strftime("%d/%m/%Y") }}</span>
+    <div class="small">{{ i.descripcion }}</div>
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin registros de seguridad.</p>{% endfor %}
+</div>
+
+<!-- ASISTENCIA -->
+<div class="card p-3 mb-3" id="asistencia-link">
+  <div class="d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">✅ Asistencia diaria de trabajadores</h5>
+    <a href="{{ url_for('obras.asistencia', obra_id=obra.id) }}" class="btn btn-sm btn-primary">Abrir checklist de hoy</a>
+  </div>
+</div>
+
+<!-- EQUIPO -->
+<div class="card p-3 mb-3" id="equipo">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">🚜 Equipo asignado</h5>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <a href="{{ url_for('obras.asignar_equipo', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Asignar</a>
+    {% endif %}
+  </div>
+  {% for a in obra.asignaciones_equipo %}
+  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+    <div><strong>{{ a.equipo.nombre }}</strong><div class="text-muted small">Desde {{ a.fecha_inicio.strftime("%d/%m/%Y") }}{% if a.fecha_fin %} hasta {{ a.fecha_fin.strftime("%d/%m/%Y") }}{% endif %}</div></div>
+    {% if a.activa and current_user.rol in ("admin", "supervisor") %}
+    <form method="post" action="{{ url_for('obras.liberar_equipo', obra_id=obra.id, asignacion_id=a.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary">Liberar</button></form>
+    {% else %}<span class="badge bg-secondary">liberado</span>{% endif %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin equipo asignado.</p>{% endfor %}
+</div>
+
+<!-- SUBCONTRATISTAS -->
+<div class="card p-3 mb-3" id="subcontratos">
+  <div class="d-flex justify-content-between mb-2"><h5 class="mb-0">🧰 Subcontratistas</h5>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <a href="{{ url_for('obras.nuevo_contrato_subcontratista', obra_id=obra.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a>
+    {% endif %}
+  </div>
+  {% for c in obra.contratos_subcontratista %}
+  <div class="border-bottom py-2">
+    <div class="d-flex justify-content-between"><strong>{{ c.subcontratista.nombre }}</strong><span>${{ "{:,.2f}".format(c.monto) }}</span></div>
+    <div class="text-muted small">{{ c.concepto }}</div>
+    <div class="progress mt-1" style="height:6px;"><div class="progress-bar" style="width:{{ c.avance_porcentaje }}%"></div></div>
+    {% if current_user.rol in ("admin", "supervisor") and c.estado == "activo" %}
+    <form method="post" action="{{ url_for('obras.actualizar_avance_subcontrato', obra_id=obra.id, contrato_id=c.id) }}" class="d-flex gap-2 mt-1">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="number" name="avance_porcentaje" min="0" max="100" value="{{ c.avance_porcentaje }}" class="form-control form-control-sm" style="width:80px">
+      <button class="btn btn-sm btn-outline-secondary">Actualizar %</button>
+    </form>
+    {% endif %}
+  </div>
+  {% else %}<p class="text-muted text-center mb-0">Sin subcontratistas en esta obra.</p>{% endfor %}
+</div>
+
+<!-- MENSAJES -->
+<div class="card p-3 mb-3" id="mensajes">
+  <h5 class="mb-2">💬 Mensajes con el cliente</h5>
+  <div class="mb-2" style="max-height:300px;overflow-y:auto;">
+    {% for m in obra.mensajes %}
+    <div class="mb-2 {{ 'text-end' if m.autor_tipo == 'usuario' }}">
+      <span class="badge {{ 'bg-primary' if m.autor_tipo == 'usuario' else 'bg-secondary' }}">{{ m.autor_nombre }}</span>
+      <div class="small">{{ m.texto }}</div>
+      <div class="text-muted" style="font-size:.7rem">{{ m.creado_en.strftime("%d/%m/%Y %H:%M") }}</div>
+    </div>
+    {% else %}<p class="text-muted text-center mb-0">Sin mensajes todavía.</p>{% endfor %}
+  </div>
+  <form method="post" action="{{ url_for('obras.nuevo_mensaje', obra_id=obra.id) }}" class="d-flex gap-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="texto" class="form-control" placeholder="Escribe un mensaje..." required>
+    <button class="btn btn-primary">Enviar</button>
+  </form>
 </div>
 
 {% endblock %}

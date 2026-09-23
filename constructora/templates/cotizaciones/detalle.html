@@ -3,9 +3,19 @@
 {% block titulo %}{{ cotizacion.titulo }}{% endblock %}
 {% block contenido %}
 <div class="card p-4 mb-4">
-  <span class="badge bg-secondary badge-estado mb-2" style="width:fit-content">{{ cotizacion.estado }}</span>
-  <h3 class="mb-1">{{ cotizacion.titulo }} <small class="text-muted">v{{ cotizacion.version }}</small></h3>
-  <p class="text-muted mb-3">👤 {{ cotizacion.levantamiento.cliente.nombre }} · 📋 {{ cotizacion.levantamiento.titulo }}</p>
+  <div class="d-flex justify-content-between align-items-start flex-wrap">
+    <div>
+      <span class="badge bg-secondary badge-estado mb-2" style="width:fit-content">{{ cotizacion.estado }}</span>
+      <h3 class="mb-1">{{ cotizacion.titulo }} <small class="text-muted">v{{ cotizacion.version }}</small></h3>
+      <p class="text-muted mb-3">👤 {{ cotizacion.levantamiento.cliente.nombre }} · 📋 {{ cotizacion.levantamiento.titulo }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('cotizaciones.pdf', cotizacion_id=cotizacion.id) }}" class="btn btn-sm btn-outline-secondary">📄 Descargar PDF</a>
+      {% if cotizacion.levantamiento.cotizaciones|length > 1 %}
+      <a href="{{ url_for('cotizaciones.comparar_versiones', levantamiento_id=cotizacion.levantamiento_id) }}" class="btn btn-sm btn-outline-secondary">Comparar versiones</a>
+      {% endif %}
+    </div>
+  </div>
 
   <table class="table">
     <thead><tr><th>Concepto</th><th>Unidad</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead>
@@ -25,6 +35,7 @@
 
   {% if cotizacion.estado == "borrador" %}
     <form method="post" action="{{ url_for('cotizaciones.enviar', cotizacion_id=cotizacion.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="btn btn-primary">Marcar como enviada al cliente →</button>
     </form>
 

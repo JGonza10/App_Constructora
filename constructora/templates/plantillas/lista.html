@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block titulo %}Plantillas de cotización{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">🧩 Plantillas de cotización</h2>
+  {% if current_user.rol in ("admin", "supervisor") %}
+  <a href="{{ url_for('plantillas.nueva') }}" class="btn btn-primary">+ Nueva plantilla</a>
+  {% endif %}
+</div>
+<p class="text-muted">Paquetes de conceptos predefinidos por tipo de obra — se cargan de un clic al armar una cotización nueva.</p>
+<div class="row">
+  {% for p in plantillas %}
+  <div class="col-md-4 mb-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <h5>{{ p.nombre }}</h5>
+        {% if current_user.rol in ("admin", "supervisor") %}
+        <form method="post" action="{{ url_for('plantillas.eliminar', plantilla_id=p.id) }}" onsubmit="return confirm('¿Eliminar esta plantilla?')">
+          <button class="btn btn-sm btn-outline-danger">✕</button>
+        </form>
+        {% endif %}
+      </div>
+      <span class="badge bg-secondary mb-2" style="width:fit-content">{{ p.tipo_obra }}</span>
+      <div class="small text-muted">{{ p.items|length }} concepto(s) — total ${{ "{:,.2f}".format(p.total) }}</div>
+    </div>
+  </div>
+  {% else %}<p class="text-muted">Todavía no hay plantillas.</p>{% endfor %}
+</div>
+{% endblock %}

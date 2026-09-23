@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block titulo %}Mis obras{% endblock %}
 {% block contenido %}
+{% if cotizaciones_pendientes %}
+<div class="alert alert-warning d-flex justify-content-between align-items-center">
+  <span>Tienes {{ cotizaciones_pendientes }} cotización(es) esperando tu decisión.</span>
+  <a href="{{ url_for('portal.cotizaciones') }}" class="btn btn-sm btn-warning">Ver cotizaciones →</a>
+</div>
+{% endif %}
 <h2 class="mb-3">Tus obras</h2>
 <div class="row">
   {% for o in obras %}

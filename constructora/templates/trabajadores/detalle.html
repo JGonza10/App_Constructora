@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}{{ trabajador.nombre }}{% endblock %}
+{% block contenido %}
+<div class="card p-4 mb-4">
+  <h3 class="mb-1">{{ trabajador.nombre }}</h3>
+  <p class="text-muted mb-0 text-capitalize">{{ trabajador.oficio }} · {{ trabajador.tipo_pago.replace("_", " ") }} · {{ trabajador.telefono or "sin teléfono" }}</p>
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between mb-2">
+        <h5 class="mb-0">📁 Expediente</h5>
+        <a href="{{ url_for('trabajadores.nuevo_documento', trabajador_id=trabajador.id) }}" class="btn btn-sm btn-primary">+ Nuevo</a>
+      </div>
+      {% for d in trabajador.documentos %}
+      <div class="d-flex justify-content-between border-bottom py-2">
+        <div>
+          <a href="{{ url_for('trabajadores.descargar_documento', documento_id=d.id) }}">{{ d.nombre }}</a>
+          <div class="text-muted small text-capitalize">{{ d.categoria.replace("_", " ") }}</div>
+        </div>
+        {% if d.fecha_vencimiento %}
+        <span class="badge {{ 'bg-danger' if d.fecha_vencimiento < hoy else 'bg-secondary' }}">vence {{ d.fecha_vencimiento.strftime("%d/%m/%Y") }}</span>
+        {% endif %}
+      </div>
+      {% else %}<p class="text-muted text-center mb-0">Sin documentos en el expediente.</p>{% endfor %}
+    </div>
+  </div>
+  <div class="col-md-6 mb-3">
+    <div class="card p-3 h-100">
+      <div class="d-flex justify-content-between mb-2">
+        <h5 class="mb-0">🏖️ Vacaciones / incapacidades</h5>
+        <a href="{{ url_for('trabajadores.nueva_ausencia', trabajador_id=trabajador.id) }}" class="btn btn-sm btn-primary">+ Nueva</a>
+      </div>
+      {% for a in trabajador.ausencias %}
+      <div class="d-flex justify-content-between border-bottom py-2">
+        <div class="text-capitalize">{{ a.tipo }}{% if a.motivo %} — {{ a.motivo }}{% endif %}</div>
+        <div class="text-muted small">{{ a.fecha_inicio.strftime("%d/%m") }} al {{ a.fecha_fin.strftime("%d/%m/%Y") }}</div>
+      </div>
+      {% else %}<p class="text-muted text-center mb-0">Sin ausencias registradas.</p>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

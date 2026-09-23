@@ -1,0 +1,22 @@
+# MySQL dedicado a este proyecto para desarrollo local, separado del MySQL
+# nativo de AppServ que ya corre en esta máquina (puerto 3306) — evita tocar
+# esa instancia (la usan otras cosas locales) y evita depender de recordar
+# su contraseña de root, que se perdió.
+#
+# Uso:
+#   docker compose -f docker-compose.local.yml up -d
+#   (las credenciales se leen de .env, mismas variables que usa la app)
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - constructora-mysql-datos:/var/lib/mysql
+
+volumes:
+  constructora-mysql-datos:

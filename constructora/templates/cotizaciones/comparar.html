@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block titulo %}Comparar versiones{% endblock %}
+{% block contenido %}
+<h3 class="mb-3">Comparativo de versiones — {{ levantamiento.titulo }}</h3>
+<div class="row">
+  {% for c in levantamiento.cotizaciones %}
+  <div class="col-md-4 mb-3">
+    <div class="card p-3 h-100 d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <h5 class="mb-0">v{{ c.version }}</h5>
+        <span class="badge bg-secondary badge-estado">{{ c.estado }}</span>
+      </div>
+      <div class="text-muted small mb-2">{{ c.titulo }}</div>
+      <table class="table table-sm mb-2">
+        <tbody>
+          {% for it in c.items %}
+          <tr><td>{{ it.concepto }}</td><td class="text-end">${{ "{:,.2f}".format(it.subtotal) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="fs-5 fw-bold mb-2">${{ "{:,.2f}".format(c.total) }}</div>
+      {% if c.estado == "rechazada" and c.motivo_rechazo %}
+      <div class="text-danger small mb-2">✕ {{ c.motivo_rechazo }}</div>
+      {% endif %}
+      <a href="{{ url_for('cotizaciones.detalle', cotizacion_id=c.id) }}" class="btn btn-sm btn-outline-primary mt-auto">Ver detalle</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

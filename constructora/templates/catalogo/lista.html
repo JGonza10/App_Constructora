@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block titulo %}Catálogo de conceptos{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">📚 Catálogo de conceptos y precios</h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('catalogo.exportar_csv') }}" class="btn btn-outline-secondary">⬇ Exportar CSV</a>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <a href="{{ url_for('catalogo.nuevo') }}" class="btn btn-primary">+ Nuevo concepto</a>
+    {% endif %}
+  </div>
+</div>
+<p class="text-muted">Conceptos reutilizables al armar una cotización — evita volver a teclear el mismo concepto y precio cada vez.</p>
+<div class="card">
+  <table class="table mb-0">
+    <thead><tr><th>Concepto</th><th>Categoría</th><th>Unidad</th><th>Precio unitario</th>{% if current_user.rol in ("admin", "supervisor") %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+      {% for c in conceptos %}
+      <tr>
+        <td>{{ c.concepto }}</td>
+        <td>{{ c.categoria or "—" }}</td>
+        <td>{{ c.unidad }}</td>
+        <td>${{ "{:,.2f}".format(c.precio_unitario) }}</td>
+        {% if current_user.rol in ("admin", "supervisor") %}
+        <td>
+          <form method="post" action="{{ url_for('catalogo.eliminar', concepto_id=c.id) }}" onsubmit="return confirm('¿Quitar este concepto del catálogo?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-danger">Quitar</button>
+          </form>
+        </td>
+        {% endif %}
+      </tr>
+      {% else %}<tr><td colspan="5" class="text-muted text-center py-4">Todavía no hay conceptos en el catálogo.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

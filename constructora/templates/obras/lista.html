@@ -6,9 +6,37 @@
 
 <div class="btn-group mb-3">
   {% for e in ["todas", "activa", "pausada", "terminada", "cancelada"] %}
-  <a href="{{ url_for('obras.lista', estado=e) }}" class="btn btn-sm btn-outline-secondary {{ 'active' if filtro == e else '' }}">{{ e }}</a>
+  <a href="{{ url_for('obras.lista', estado=e, q=texto, responsable_id=responsable_id, desde=desde, hasta=hasta) }}" class="btn btn-sm btn-outline-secondary {{ 'active' if filtro == e else '' }}">{{ e }}</a>
   {% endfor %}
 </div>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <input type="hidden" name="estado" value="{{ filtro }}">
+  <div class="col-md-4">
+    <label class="form-label small">Buscar (obra o cliente)</label>
+    <input type="text" name="q" value="{{ texto }}" class="form-control form-control-sm" placeholder="Nombre de la obra o del cliente...">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label small">Responsable</label>
+    <select name="responsable_id" class="form-select form-select-sm">
+      <option value="">— Todos —</option>
+      {% for r in responsables %}
+      <option value="{{ r.id }}" {{ "selected" if responsable_id == r.id }}>{{ r.nombre }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label small">Inicio desde</label>
+    <input type="date" name="desde" value="{{ desde }}" class="form-control form-control-sm">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label small">Inicio hasta</label>
+    <input type="date" name="hasta" value="{{ hasta }}" class="form-control form-control-sm">
+  </div>
+  <div class="col-md-1">
+    <button class="btn btn-sm btn-primary w-100">Filtrar</button>
+  </div>
+</form>
 
 <div class="row">
   {% for o in obras %}

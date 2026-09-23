@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual del Sistema Constructora</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; color: #24292f; line-height: 1.6; background: #fff; }
+  h1 { color: #0078d7; font-size: 1.9rem; margin-bottom: .2rem; }
+  h2 { color: #0078d7; font-size: 1.35rem; margin-top: 2rem; border-bottom: 1px solid #e1e4e8; padding-bottom: .3rem; }
+  h3 { font-size: 1.1rem; margin-top: 1.4rem; }
+  h4 { font-size: 1rem; margin-top: 1.2rem; }
+  .subtitulo { color: #6b7280; font-style: italic; margin-top: 0; }
+  code { background: #f3f4f6; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; color: #0078d7; }
+  pre { background: #f3f4f6; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: .85rem; }
+  pre code { background: none; padding: 0; color: inherit; }
+  blockquote { border-left: 3px solid #0078d7; margin-left: 0; padding-left: 1rem; color: #6b7280; font-style: italic; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .92rem; }
+  th, td { border: 1px solid #d1d5db; padding: .5rem .6rem; text-align: left; vertical-align: top; }
+  th { background: #0078d7; color: #fff; }
+  tr:nth-child(even) { background: #f9fafb; }
+  hr { border: none; border-top: 1px solid #d1d5db; margin: 1.5rem 0; }
+  .imprimir { margin: 1.5rem 0; }
+  .imprimir button { background: #0078d7; color: #fff; border: none; padding: .6rem 1.2rem; border-radius: 6px; font-size: .95rem; cursor: pointer; }
+  @media print { .imprimir { display: none; } body { max-width: none; } }
+</style>
+</head>
+<body>
+<div class="imprimir"><button onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button></div>
+<h1>Manual del Sistema Constructora</h1>
+<p class="subtitulo">Manual de usuario del sistema de administración de obra para la constructora de Juan Gonzalez Mendoza (&quot;Gonza&quot;). Refleja el estado del código al 2026-09-08. Si algo de aquí ya no coincide con lo que ves en pantalla, el código manda sobre este documento — regenera los formatos imprimibles con `python generar_manual.py`.</p>
+<h2>1. Qué es y cómo entra cada quien</h2>
+<p>Aplicación web (Flask) para llevar toda la operación de una constructora: desde que un cliente pide una cotización hasta que la obra se termina y se cobra. Hay dos formas de entrar:</p>
+<ul><li><strong>Equipo interno</strong> (<code>/login</code>): admin, supervisor o empleado. Cada rol ve y puede hacer cosas distintas — un empleado registra gastos y avances, pero solo admin/supervisor aprueban cotizaciones, aceptan órdenes de cambio o ven reportes de rentabilidad.</li><li><strong>Portal del cliente</strong> (<code>/portal/login</code>): acceso de solo lectura (más aceptar/rechazar su propia cotización) para que el cliente vea el avance de su obra sin necesitar una cuenta interna.</li></ul>
+<h2>2. El flujo que gobierna todo</h2>
+<pre><code>Cliente -&gt; Levantamiento (que pidio) -&gt; Cotizacion (version por version)
+   -&gt; [al ACEPTARSE] nace la Obra, con el contrato = total de esa cotizacion
+      -&gt; gastos, mano de obra, avance, tareas, bitacora, documentos, pagos...</code></pre>
+<p>No existe un botón para crear una obra directo — nace sola al aceptar una cotización, para que el monto de contrato nunca se desincronice de lo cotizado. Cada pantalla de creación te lleva después a una de &quot;¿qué sigue?&quot; con los siguientes pasos típicos, en vez de dejarte adivinar.</p>
+<h2>3. Clientes, levantamientos y cotizaciones</h2>
+<ul><li><strong>Clientes</strong>: alta con nombre, tipo (persona física/empresa), contacto, RFC. Buscador por nombre/email/teléfono/RFC en la lista.</li><li><strong>Levantamiento</strong>: lo que el cliente pidió (indicaciones, tipo de obra, dirección, fecha de visita).</li><li><strong>Cotización</strong>: se arma línea por línea (concepto, unidad, cantidad, precio unitario). Se puede:</li><li>Cargar conceptos del <strong>catálogo de precios</strong> (menú &quot;Más → Catálogo de conceptos&quot;) con un clic, en vez de teclear cada uno.</li><li>Cargar una <strong>plantilla completa</strong> (&quot;Más → Plantillas de cotización&quot;) — paquetes predefinidos por tipo de obra (ej. &quot;Casa 100m²&quot;) que reemplazan todas las líneas de un jalón.</li><li>Descargarse en <strong>PDF</strong> para mandarla al cliente.</li><li>Tiene versiones (v1, v2...): si se rechaza, se crea una nueva versión del mismo levantamiento sin perder el historial. Cuando hay más de una versión, un botón &quot;Comparar versiones&quot; las pone lado a lado.</li><li><strong>Aceptar/rechazar</strong>: lo puede hacer el equipo interno (admin/supervisor) o el propio <strong>cliente desde su portal</strong>, con firma capturada a mano (dibujada con el dedo o el mouse) si quiere. En cuanto se acepta, nace la obra.</li></ul>
+<h2>4. La obra — todo lo que pasa en campo</h2>
+<p>Cada obra tiene su pantalla de detalle con estas secciones (usa los botones &quot;+ Nuevo&quot; de cada una):</p>
+<table><thead><tr><th>Sección</th><th>Para qué</th></tr></thead><tbody><tr><td>Gastos</td><td>Materiales, equipo, subcontratista, administrativo — con proveedor opcional. Exportable a CSV.</td></tr><tr><td>Mano de obra</td><td>Pagos a trabajadores por día/destajo/semana, separados de &quot;gastos&quot;.</td></tr><tr><td>Avance semanal</td><td>% acumulado por etapa — alimenta la barra de progreso y la Curva S.</td></tr><tr><td>Tareas</td><td>Pendiente/en curso/terminada, con responsable y fecha límite.</td></tr><tr><td>Bitácora diaria</td><td>Clima, personal en obra, actividades, incidencias — con <strong>fotos</strong> adjuntas.</td></tr><tr><td>Documentos</td><td>Planos, licencias, contratos, actas, facturas — archivo real subido (no solo un link), visible o no al cliente, con fecha de vencimiento opcional (licencias/pólizas).</td></tr><tr><td>Pagos del cliente</td><td>Calendario de cobranza; los que se pasan de fecha se marcan &quot;vencido&quot; solos cada madrugada.</td></tr><tr><td>Inventario</td><td>Entradas y salidas de material — el sistema calcula la existencia sola del historial, no hay que llevarla aparte.</td></tr><tr><td>Órdenes de compra</td><td>Pedido a proveedor antes de pagar (solicitada → confirmada → recibida). Al marcarla &quot;recibida&quot; se genera el gasto real y entra al inventario en un solo paso.</td></tr><tr><td>Órdenes de cambio</td><td>Cuando el cliente pide algo fuera del alcance original: sube (o baja) el contrato de forma trazable, con aprobación — nunca se edita el monto a mano.</td></tr><tr><td>Seguridad e higiene</td><td>Checklist de EPP e incidentes — uno grave manda alerta al momento.</td></tr><tr><td>Asistencia</td><td>Checklist diario de quién de los trabajadores llegó a esa obra (independiente de a quién se le pagó).</td></tr><tr><td>Equipo asignado</td><td>Qué maquinaria (propia o rentada) está en esta obra y desde cuándo.</td></tr><tr><td>Subcontratistas</td><td>Contrato y % de avance propio, distinto de un simple &quot;gasto&quot;.</td></tr><tr><td>Mensajes</td><td>Chat simple con el cliente, visible de los dos lados.</td></tr></tbody></table>
+<p>Arriba de la obra también hay una gráfica de <strong>flujo de caja mensual</strong> (ingresos recibidos vs. gastos) y, para admin/supervisor, un link al <strong>reporte de rentabilidad</strong>.</p>
+<h2>5. Reportes y dinero</h2>
+<ul><li><strong>Reporte de rentabilidad</strong> (por obra): contratado vs. gastado vs. margen vs. cobranza, más la <strong>Curva S</strong> (% de avance físico contra % del contrato ya gastado — si la línea roja va por delante de la azul, la obra está gastando más rápido de lo que avanza).</li><li><strong>Dashboard</strong> (inicio): obras activas, levantamientos sin cotizar, cotizaciones esperando respuesta, y una gráfica de <strong>flujo de caja consolidado</strong> de todas las obras activas juntas.</li><li><strong>Nómina semanal</strong> (&quot;Más → Nómina&quot;): agrupa los pagos de mano de obra por trabajador en la semana que elijas, con los días de asistencia al lado. Exportable a CSV.</li><li><strong>Auditoría</strong> (solo admin, &quot;Más → Auditoría&quot;): quién aceptó/rechazó qué cotización y quién aprobó qué orden de cambio — no un log general, solo lo que mueve dinero o el estado de una obra.</li></ul>
+<h2>6. Alertas automáticas</h2>
+<p>El sistema avisa solo (por email y/o Telegram, si están configurados — si no, solo queda en el registro del servidor) cuando:</p>
+<ul><li>Una obra cruza el 90% o el 100% de su presupuesto gastado.</li><li>Un pago de cliente se vence sin cobrarse.</li><li>Un documento con fecha de vencimiento (licencia, póliza) está a 30 días de caducar.</li><li>Se registra un incidente de seguridad grave.</li></ul>
+<p>También avisa <strong>al cliente por su correo</strong> cuando hay un avance nuevo o un documento nuevo visible en su portal.</p>
+<h2>7. Trabajadores</h2>
+<p>Además del alta básica (nombre, oficio, teléfono, tipo de pago), cada trabajador tiene su propia ficha con:</p>
+<ul><li><strong>Expediente</strong>: identificación, contrato, examen médico, seguro — archivo real, con vencimiento opcional.</li><li><strong>Vacaciones/incapacidades</strong>: se marcan como ausencia y aparecen reflejadas en la nómina de esa semana.</li></ul>
+<h2>8. Catálogos de apoyo</h2>
+<ul><li><strong>Catálogo de conceptos</strong> (&quot;Más&quot;): banco de precios reutilizable al cotizar, exportable a CSV.</li><li><strong>Plantillas de cotización</strong> (&quot;Más&quot;): paquetes de conceptos por tipo de obra.</li><li><strong>Equipo y maquinaria</strong> (&quot;Más&quot;): inventario de equipo propio/rentado, con su costo de renta diario.</li><li><strong>Subcontratistas</strong> (&quot;Más&quot;): catálogo de subcontratistas con su especialidad, para asignarles contratos en las obras.</li></ul>
+<h2>9. En el celular</h2>
+<p>La app es instalable como aplicación (PWA): desde el navegador del celular, &quot;Agregar a pantalla de inicio&quot; pone el ícono como cualquier app. Está pensada para que bitácora, gastos y asistencia se capturen desde el celular en obra, no solo desde escritorio.</p>
+<h2>10. Instalación y arranque (para quien administre el servidor)</h2>
+<pre><code>venv\Scripts\activate
+copy .env.example .env              # define SECRET_KEY, DB_* y (opcional) ALERTAS_*
+flask --app wsgi db upgrade         # aplica el esquema completo
+flask --app wsgi crear-admin --email tu@correo.com --password &quot;Algo#Seguro1&quot; --nombre &quot;Tu Nombre&quot;
+python wsgi.py                      # http://localhost:5000</code></pre>
+<p>Desarrollo local: como el MySQL nativo de esta máquina perdió su contraseña de root, el ambiente de desarrollo usa un MySQL propio en Docker (<code>docker compose -f docker-compose.local.yml up -d</code>, puerto 3307) — no toca el MySQL del sistema. Producción sigue en Railway, desplegado automáticamente al hacer push al repositorio de GitHub.</p>
+<h2>11. Lo que todavía no hace</h2>
+<ul><li>No timbra facturas (CFDI) — los documentos &quot;factura&quot; son solo el archivo, no facturación electrónica real.</li><li>No calcula nómina fiscal (ISR/IMSS) — la &quot;nómina semanal&quot; es un resumen de pagos, no un sistema de recursos humanos completo.</li><li>Las alertas por email/Telegram necesitan configurarse (<code>.env</code>) — sin eso, solo quedan en el registro del servidor, nadie las recibe.</li></ul>
+</body>
+</html>

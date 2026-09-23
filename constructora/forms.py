@@ -1,9 +1,13 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (
     StringField, PasswordField, TextAreaField, SelectField, DecimalField,
-    IntegerField, DateField, BooleanField, FieldList, FormField, HiddenField,
+    IntegerField, DateField, BooleanField, FieldList, FormField, MultipleFileField,
 )
 from wtforms.validators import DataRequired, Email, Optional, NumberRange, Length
+
+EXTENSIONES_DOCUMENTO = ["pdf", "png", "jpg", "jpeg", "webp", "gif", "doc", "docx", "xls", "xlsx", "dwg"]
+EXTENSIONES_FOTO = ["png", "jpg", "jpeg", "webp"]
 
 
 class LoginForm(FlaskForm):
@@ -133,6 +137,9 @@ class BitacoraForm(FlaskForm):
     personal_en_obra = IntegerField("Personal en obra", validators=[Optional(), NumberRange(min=0)])
     actividades = TextAreaField("Actividades realizadas", validators=[DataRequired()])
     incidencias = TextAreaField("Incidencias (opcional)", validators=[Optional()])
+    fotos = MultipleFileField("Fotos del día (opcional)", validators=[
+        Optional(), FileAllowed(EXTENSIONES_FOTO, "Solo imágenes (png/jpg/webp)."),
+    ])
 
 
 class DocumentoForm(FlaskForm):
@@ -141,7 +148,15 @@ class DocumentoForm(FlaskForm):
         ("plano", "Plano"), ("licencia", "Licencia"), ("contrato", "Contrato"),
         ("acta", "Acta"), ("factura", "Factura"), ("otro", "Otro"),
     ])
-    url_archivo = StringField("URL o ruta del archivo", validators=[DataRequired(), Length(max=500)])
+    archivo = FileField("Subir archivo", validators=[
+        Optional(), FileAllowed(EXTENSIONES_DOCUMENTO, "Tipo de archivo no permitido."),
+    ])
+    url_archivo = StringField(
+        "…o URL/ruta externa (si no subes un archivo)", validators=[Optional(), Length(max=500)],
+    )
+    fecha_vencimiento = DateField(
+        "Fecha de vencimiento (opcional — licencias, pólizas, permisos)", validators=[Optional()],
+    )
     visible_cliente = BooleanField("Visible en el portal del cliente")
 
 
@@ -149,3 +164,121 @@ class PagoClienteForm(FlaskForm):
     concepto = StringField("Concepto", validators=[DataRequired(), Length(max=150)])
     monto = DecimalField("Monto ($)", validators=[DataRequired(), NumberRange(min=0.01)])
     fecha_programada = DateField("Fecha programada", validators=[DataRequired()])
+
+
+class ConceptoCatalogoForm(FlaskForm):
+    concepto = StringField("Concepto", validators=[DataRequired(), Length(max=200)])
+    unidad = StringField("Unidad", validators=[DataRequired(), Length(max=20)], default="pza")
+    precio_unitario = DecimalField("Precio unitario", validators=[DataRequired(), NumberRange(min=0.01)])
+    categoria = StringField("Categoría (opcional, ej. 'Cimentación')", validators=[Optional(), Length(max=80)])
+
+
+class PortalRechazoCotizacionForm(FlaskForm):
+    motivo_rechazo = TextAreaField("Motivo del rechazo", validators=[DataRequired()])
+
+
+# ─────────────────────────── Inventario y compras ─────────────────────────
+
+class MovimientoInventarioForm(FlaskForm):
+    tipo = SelectField("Tipo", choices=[("entrada", "Entrada (compra/recepción)"), ("salida", "Salida (consumo)")])
+    material = StringField("Material", validators=[DataRequired(), Length(max=150)])
+    unidad = StringField("Unidad", validators=[DataRequired(), Length(max=20)], default="pza")
+    cantidad = DecimalField("Cantidad", validators=[DataRequired(), NumberRange(min=0.01)])
+    motivo = StringField("Motivo (opcional)", validators=[Optional(), Length(max=200)])
+    fecha = DateField("Fecha", validators=[DataRequired()])
+
+
+class OrdenCompraForm(FlaskForm):
+    proveedor_id = SelectField("Proveedor", coerce=int, validators=[Optional()])
+    concepto = StringField("Concepto", validators=[DataRequired(), Length(max=200)])
+    cantidad = DecimalField("Cantidad", validators=[DataRequired(), NumberRange(min=0.01)], default=1)
+    unidad = StringField("Unidad", validators=[DataRequired(), Length(max=20)], default="pza")
+    costo_estimado = DecimalField("Costo estimado ($)", validators=[DataRequired(), NumberRange(min=0.01)])
+    fecha_solicitud = DateField("Fecha de solicitud", validators=[DataRequired()])
+
+
+# ─────────────────────────── Equipo y subcontratistas ──────────────────────
+
+class EquipoForm(FlaskForm):
+    nombre = StringField("Nombre del equipo", validators=[DataRequired(), Length(max=150)])
+    tipo = StringField("Tipo (ej. 'Grúa torre')", validators=[Optional(), Length(max=80)])
+    propio = BooleanField("Es propio (no rentado)", default=True)
+    costo_renta_diario = DecimalField("Costo de renta diario ($, si aplica)", validators=[Optional()])
+
+
+class AsignacionEquipoForm(FlaskForm):
+    equipo_id = SelectField("Equipo", coerce=int, validators=[DataRequired()])
+    fecha_inicio = DateField("Fecha de inicio", validators=[DataRequired()])
+    notas = StringField("Notas (opcional)", validators=[Optional(), Length(max=200)])
+
+
+class SubcontratistaForm(FlaskForm):
+    nombre = StringField("Nombre / razón social", validators=[DataRequired(), Length(max=150)])
+    especialidad = StringField("Especialidad (ej. 'Instalaciones eléctricas')", validators=[Optional(), Length(max=100)])
+    contacto = StringField("Contacto", validators=[Optional(), Length(max=100)])
+    telefono = StringField("Teléfono", validators=[Optional(), Length(max=20)])
+
+
+class ContratoSubcontratistaForm(FlaskForm):
+    subcontratista_id = SelectField("Subcontratista", coerce=int, validators=[DataRequired()])
+    concepto = StringField("Concepto del contrato", validators=[DataRequired(), Length(max=200)])
+    monto = DecimalField("Monto ($)", validators=[DataRequired(), NumberRange(min=0.01)])
+    fecha_inicio = DateField("Fecha de inicio", validators=[Optional()])
+    fecha_fin = DateField("Fecha fin estimada", validators=[Optional()])
+
+
+# ─────────────────────────── Cambios y seguridad ───────────────────────────
+
+class OrdenCambioForm(FlaskForm):
+    descripcion = TextAreaField("Descripción del cambio pedido por el cliente", validators=[DataRequired()])
+    monto = DecimalField("Monto adicional ($, puede ser negativo si reduce alcance)", validators=[DataRequired()])
+
+
+class IncidenteSeguridadForm(FlaskForm):
+    fecha = DateField("Fecha", validators=[DataRequired()])
+    tipo = SelectField("Tipo", choices=[
+        ("checklist_epp", "Checklist de EPP"), ("incidente", "Incidente"), ("casi_accidente", "Casi accidente"),
+    ])
+    gravedad = SelectField("Gravedad", choices=[("baja", "Baja"), ("media", "Media"), ("alta", "Alta")])
+    descripcion = TextAreaField("Descripción", validators=[DataRequired()])
+    accion_tomada = TextAreaField("Acción tomada (opcional)", validators=[Optional()])
+
+
+# ─────────────────────────── Trabajadores: expediente y ausencias ─────────
+
+class DocumentoTrabajadorForm(FlaskForm):
+    nombre = StringField("Nombre del documento", validators=[DataRequired(), Length(max=200)])
+    categoria = SelectField("Categoría", choices=[
+        ("identificacion", "Identificación"), ("contrato", "Contrato"),
+        ("examen_medico", "Examen médico"), ("seguro", "Seguro"), ("otro", "Otro"),
+    ])
+    archivo = FileField("Archivo", validators=[
+        DataRequired(), FileAllowed(EXTENSIONES_DOCUMENTO, "Tipo de archivo no permitido."),
+    ])
+    fecha_vencimiento = DateField("Fecha de vencimiento (opcional)", validators=[Optional()])
+
+
+class AusenciaTrabajadorForm(FlaskForm):
+    tipo = SelectField("Tipo", choices=[
+        ("vacaciones", "Vacaciones"), ("incapacidad", "Incapacidad"), ("permiso", "Permiso"),
+    ])
+    fecha_inicio = DateField("Fecha de inicio", validators=[DataRequired()])
+    fecha_fin = DateField("Fecha de fin", validators=[DataRequired()])
+    motivo = StringField("Motivo (opcional)", validators=[Optional(), Length(max=200)])
+
+
+# ─────────────────────────── Plantillas de cotizacion ──────────────────────
+
+class PlantillaCotizacionForm(FlaskForm):
+    nombre = StringField("Nombre de la plantilla", validators=[DataRequired(), Length(max=150)])
+    tipo_obra = SelectField("Tipo de obra", choices=[
+        ("residencial", "Residencial"), ("comercial", "Comercial"),
+        ("publica", "Pública"), ("mixta", "Mixta"), ("otro", "Otro"),
+    ])
+    items = FieldList(FormField(CotizacionItemForm), min_entries=1)
+
+
+# ─────────────────────────── Mensajeria y documentos con vencimiento ──────
+
+class MensajeObraForm(FlaskForm):
+    texto = TextAreaField("Mensaje", validators=[DataRequired(), Length(max=2000)])

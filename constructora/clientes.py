@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask_login import login_required
 
 from .extensions import db
 from .decorators import roles_requeridos
@@ -12,8 +12,16 @@ clientes_bp = Blueprint("clientes", __name__)
 @clientes_bp.route("/")
 @login_required
 def lista():
-    clientes = Cliente.query.order_by(Cliente.creado_en.desc()).all()
-    return render_template("clientes/lista.html", clientes=clientes)
+    texto = request.args.get("q", "").strip()
+    query = Cliente.query
+    if texto:
+        patron = f"%{texto}%"
+        query = query.filter(db.or_(
+            Cliente.nombre.ilike(patron), Cliente.email.ilike(patron),
+            Cliente.telefono.ilike(patron), Cliente.rfc.ilike(patron),
+        ))
+    clientes = query.order_by(Cliente.creado_en.desc()).all()
+    return render_template("clientes/lista.html", clientes=clientes, texto=texto)
 
 
 @clientes_bp.route("/nuevo", methods=["GET", "POST"])

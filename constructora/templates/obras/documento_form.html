@@ -4,12 +4,14 @@
 {% block contenido %}
 <div class="card p-4">
   <h3>📁 Nuevo documento — {{ obra.nombre }}</h3>
-  <form method="post" novalidate>
+  <form method="post" enctype="multipart/form-data" novalidate>
     {{ form.hidden_tag() }}
     <div class="row">
       {{ campo(form.nombre, "col-md-8") }}
       {{ campo(form.categoria, "col-md-4") }}
+      {{ campo(form.archivo, "col-12") }}
       {{ campo(form.url_archivo, "col-12") }}
+      {{ campo(form.fecha_vencimiento, "col-md-6") }}
       {{ campo(form.visible_cliente, "col-12") }}
     </div>
     <button type="submit" class="btn btn-primary">Registrar documento</button>

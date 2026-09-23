@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nueva ausencia{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>🏖️ Nueva ausencia — {{ trabajador.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.tipo, "col-md-4") }}
+      {{ campo(form.fecha_inicio, "col-md-4") }}
+      {{ campo(form.fecha_fin, "col-md-4") }}
+      {{ campo(form.motivo, "col-12") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('trabajadores.detalle', trabajador_id=trabajador.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block titulo %}Nómina semanal{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">💵 Nómina semanal</h2>
+  <div class="btn-group">
+    <a href="{{ url_for('trabajadores.nomina', semana=semana_anterior) }}" class="btn btn-outline-secondary">← Semana anterior</a>
+    <a href="{{ url_for('trabajadores.nomina', semana=semana_siguiente) }}" class="btn btn-outline-secondary">Semana siguiente →</a>
+    {% if current_user.rol in ("admin", "supervisor") %}
+    <a href="{{ url_for('trabajadores.nomina_exportar_csv', semana=lunes.isoformat()) }}" class="btn btn-outline-secondary">⬇ Exportar CSV</a>
+    {% endif %}
+  </div>
+</div>
+<p class="text-muted">Semana del {{ lunes.strftime("%d/%m/%Y") }} al {{ domingo.strftime("%d/%m/%Y") }}</p>
+
+<div class="card">
+  <table class="table mb-0">
+    <thead><tr><th>Trabajador</th><th>Oficio</th><th>Días asistidos</th><th>Pagos de la semana</th><th class="text-end">Total</th></tr></thead>
+    <tbody>
+      {% for fila in filas %}
+      <tr>
+        <td>
+          <a href="{{ url_for('trabajadores.detalle', trabajador_id=fila.trabajador.id) }}">{{ fila.trabajador.nombre }}</a>
+          {% if fila.ausencia %}<span class="badge bg-warning text-dark ms-1">{{ fila.ausencia.tipo }}</span>{% endif %}
+        </td>
+        <td class="text-capitalize">{{ fila.trabajador.oficio }}</td>
+        <td>{{ fila.dias_asistidos }}</td>
+        <td>
+          {% for p in fila.pagos %}
+          <div class="small">{{ p.fecha.strftime("%d/%m") }} · {{ p.obra.nombre }} · {{ p.concepto }} — ${{ "{:,.2f}".format(p.monto) }}</div>
+          {% endfor %}
+        </td>
+        <td class="text-end fw-bold">${{ "{:,.2f}".format(fila.total) }}</td>
+      </tr>
+      {% else %}<tr><td colspan="5" class="text-muted text-center py-4">Sin actividad de trabajadores en esta semana.</td></tr>{% endfor %}
+    </tbody>
+    {% if filas %}
+    <tfoot>
+      <tr><th colspan="4" class="text-end">Total de la semana</th><th class="text-end">${{ "{:,.2f}".format(total_semana) }}</th></tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}

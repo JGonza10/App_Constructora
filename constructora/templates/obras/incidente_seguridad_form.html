@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Registro de seguridad{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>🦺 Registro de seguridad e higiene — {{ obra.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.fecha, "col-md-4") }}
+      {{ campo(form.tipo, "col-md-4") }}
+      {{ campo(form.gravedad, "col-md-4") }}
+      {{ campo(form.descripcion, "col-12") }}
+      {{ campo(form.accion_tomada, "col-12") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id, _anchor='seguridad') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

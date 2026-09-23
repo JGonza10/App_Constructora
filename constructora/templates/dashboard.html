@@ -31,6 +31,27 @@
 </div>
 {% endif %}
 
+{% if flujo_caja_consolidado and flujo_caja_consolidado.etiquetas %}
+<div class="card p-3 mb-4">
+  <h5 class="mb-2">📊 Flujo de caja consolidado (todas las obras activas)</h5>
+  <canvas id="grafica-consolidada" height="80"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  new Chart(document.getElementById("grafica-consolidada"), {
+    type: "bar",
+    data: {
+      labels: {{ flujo_caja_consolidado.etiquetas|tojson }},
+      datasets: [
+        { label: "Ingresos", data: {{ flujo_caja_consolidado.ingresos|tojson }}, backgroundColor: "#198754" },
+        { label: "Egresos", data: {{ flujo_caja_consolidado.egresos|tojson }}, backgroundColor: "#dc3545" },
+      ],
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } },
+  });
+</script>
+{% endif %}
+
 <div class="row">
   <div class="col-md-6 mb-4">
     <div class="card p-3">

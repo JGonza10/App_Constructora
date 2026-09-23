@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nueva orden de cambio{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>📝 Nueva orden de cambio — {{ obra.nombre }}</h3>
+  <p class="text-muted">Cuando el cliente pide algo fuera del alcance original, esto sube (o baja) el contrato de forma trazable, con aprobación.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.descripcion, "col-12") }}
+      {{ campo(form.monto, "col-md-4") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Registrar orden de cambio</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id, _anchor='cambios') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

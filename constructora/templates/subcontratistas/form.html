@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nuevo subcontratista{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>Nuevo subcontratista</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.nombre, "col-md-8") }}
+      {{ campo(form.especialidad, "col-md-4") }}
+      {{ campo(form.contacto, "col-md-6") }}
+      {{ campo(form.telefono, "col-md-6") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('subcontratistas.lista') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

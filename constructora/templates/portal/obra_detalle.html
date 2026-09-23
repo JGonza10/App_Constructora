@@ -30,7 +30,10 @@
 <h5 class="mt-4">📁 Documentos compartidos</h5>
 {% for d in documentos %}
 <div class="d-flex justify-content-between border-bottom py-2">
-  <div><strong>{{ d.nombre }}</strong><div class="text-muted small text-capitalize">{{ d.categoria }}</div></div>
+  <div>
+    <a href="{{ url_for('obras.descargar_documento', obra_id=obra.id, documento_id=d.id) }}"><strong>{{ d.nombre }}</strong></a>
+    <div class="text-muted small text-capitalize">{{ d.categoria }}</div>
+  </div>
 </div>
 {% else %}<p class="text-muted">No hay documentos compartidos todavía.</p>{% endfor %}
 {% endblock %}

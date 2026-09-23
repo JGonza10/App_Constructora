@@ -36,6 +36,7 @@ class Config:
     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "true").lower() == "true"
 
     WTF_CSRF_ENABLED = True
+    MAX_CONTENT_LENGTH = 15 * 1024 * 1024  # 15 MB por archivo subido (documentos/fotos)
 
 
 class TestConfig:

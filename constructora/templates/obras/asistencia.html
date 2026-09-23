@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Asistencia{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">✅ Asistencia diaria — {{ obra.nombre }}</h3>
+  <form method="get" class="d-flex gap-2">
+    <input type="date" name="fecha" value="{{ fecha.isoformat() }}" class="form-control form-control-sm" onchange="this.form.submit()">
+  </form>
+</div>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="fecha" value="{{ fecha.isoformat() }}">
+  <div class="card">
+    <table class="table mb-0">
+      <thead><tr><th>Trabajador</th><th>Oficio</th><th class="text-center">Presente</th></tr></thead>
+      <tbody>
+        {% for t in trabajadores %}
+        <tr>
+          <td>{{ t.nombre }}</td>
+          <td class="text-capitalize">{{ t.oficio }}</td>
+          <td class="text-center">
+            <input type="checkbox" name="presente_{{ t.id }}" class="form-check-input" {{ "checked" if registros.get(t.id) }}>
+          </td>
+        </tr>
+        {% else %}<tr><td colspan="3" class="text-muted text-center py-4">No hay trabajadores activos.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <button type="submit" class="btn btn-primary mt-3">Guardar asistencia del día</button>
+  <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary mt-3">Volver a la obra</a>
+</form>
+{% endblock %}

@@ -10,7 +10,7 @@
     <thead><tr><th>Nombre</th><th>Oficio</th><th>Teléfono</th><th>Tipo de pago</th></tr></thead>
     <tbody>
       {% for t in trabajadores %}
-      <tr><td>{{ t.nombre }}</td><td class="text-capitalize">{{ t.oficio }}</td><td>{{ t.telefono or "—" }}</td><td class="text-capitalize">{{ t.tipo_pago.replace("_", " ") }}</td></tr>
+      <tr><td><a href="{{ url_for('trabajadores.detalle', trabajador_id=t.id) }}">{{ t.nombre }}</a></td><td class="text-capitalize">{{ t.oficio }}</td><td>{{ t.telefono or "—" }}</td><td class="text-capitalize">{{ t.tipo_pago.replace("_", " ") }}</td></tr>
       {% else %}<tr><td colspan="4" class="text-muted text-center py-4">No hay trabajadores registrados.</td></tr>{% endfor %}
     </tbody>
   </table>

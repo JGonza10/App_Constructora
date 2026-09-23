@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block titulo %}Subcontratistas{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">🧰 Subcontratistas</h2>
+  {% if current_user.rol in ("admin", "supervisor") %}
+  <a href="{{ url_for('subcontratistas.nuevo') }}" class="btn btn-primary">+ Nuevo subcontratista</a>
+  {% endif %}
+</div>
+<div class="card">
+  <table class="table mb-0">
+    <thead><tr><th>Nombre</th><th>Especialidad</th><th>Contacto</th><th>Teléfono</th></tr></thead>
+    <tbody>
+      {% for s in subcontratistas %}
+      <tr><td>{{ s.nombre }}</td><td>{{ s.especialidad or "—" }}</td><td>{{ s.contacto or "—" }}</td><td>{{ s.telefono or "—" }}</td></tr>
+      {% else %}<tr><td colspan="4" class="text-muted text-center py-4">No hay subcontratistas registrados.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+{% block titulo %}Nueva orden de compra{% endblock %}
+{% block contenido %}
+<div class="card p-4">
+  <h3>🧾 Nueva orden de compra — {{ obra.nombre }}</h3>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">
+      {{ campo(form.concepto, "col-md-8") }}
+      {{ campo(form.proveedor_id, "col-md-4") }}
+      {{ campo(form.cantidad, "col-md-4") }}
+      {{ campo(form.unidad, "col-md-4") }}
+      {{ campo(form.costo_estimado, "col-md-4") }}
+      {{ campo(form.fecha_solicitud, "col-md-4") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Crear orden</button>
+    <a href="{{ url_for('obras.detalle', obra_id=obra.id, _anchor='compras') }}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

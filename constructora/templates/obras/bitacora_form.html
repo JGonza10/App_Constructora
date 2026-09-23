@@ -4,7 +4,7 @@
 {% block contenido %}
 <div class="card p-4">
   <h3>📓 Nuevo registro de bitácora — {{ obra.nombre }}</h3>
-  <form method="post" novalidate>
+  <form method="post" enctype="multipart/form-data" novalidate>
     {{ form.hidden_tag() }}
     <div class="row">
       {{ campo(form.fecha, "col-md-4") }}
@@ -12,6 +12,7 @@
       {{ campo(form.personal_en_obra, "col-md-4") }}
       {{ campo(form.actividades, "col-12") }}
       {{ campo(form.incidencias, "col-12") }}
+      {{ campo(form.fotos, "col-12") }}
     </div>
     <button type="submit" class="btn btn-primary">Guardar registro</button>
     <a href="{{ url_for('obras.detalle', obra_id=obra.id) }}" class="btn btn-outline-secondary">Cancelar</a>

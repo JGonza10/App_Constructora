@@ -7,6 +7,9 @@
   <a href="{{ url_for('clientes.nuevo') }}" class="btn btn-primary">+ Nuevo cliente</a>
   {% endif %}
 </div>
+<form method="get" class="mb-3">
+  <input type="text" name="q" value="{{ texto }}" class="form-control" placeholder="Buscar por nombre, email, teléfono o RFC...">
+</form>
 <div class="row">
   {% for c in clientes %}
   <div class="col-md-4 mb-3">

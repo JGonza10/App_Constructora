@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block titulo %}Auditoría{% endblock %}
+{% block contenido %}
+<h2 class="mb-3">🔍 Registro de auditoría</h2>
+<p class="text-muted">Acciones críticas: aceptar/rechazar cotizaciones, órdenes de cambio aprobadas. Últimos 300 registros.</p>
+<div class="card">
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Fecha</th><th>Quién</th><th>Acción</th><th>Entidad</th><th>Detalle</th></tr></thead>
+    <tbody>
+      {% for r in registros %}
+      <tr>
+        <td class="text-nowrap">{{ r.creado_en.strftime("%d/%m/%Y %H:%M") }}</td>
+        <td>{{ r.usuario_nombre }}</td>
+        <td>{{ r.accion }}</td>
+        <td>{{ r.entidad }} #{{ r.entidad_id }}</td>
+        <td class="small">{{ r.detalle }}</td>
+      </tr>
+      {% else %}<tr><td colspan="5" class="text-muted text-center py-4">Sin registros todavía.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

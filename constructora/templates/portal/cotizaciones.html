@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Cotizaciones pendientes{% endblock %}
+{% block contenido %}
+<h2 class="mb-3">Cotizaciones pendientes de tu decisión</h2>
+{% if not cotizaciones %}
+<p class="text-muted">No tienes cotizaciones esperando respuesta por el momento.</p>
+{% else %}
+<div class="list-group">
+  {% for c in cotizaciones %}
+  <a href="{{ url_for('portal.cotizacion_detalle', cotizacion_id=c.id) }}" class="list-group-item list-group-item-action d-flex justify-content-between">
+    <span>{{ c.titulo }} — {{ c.levantamiento.titulo }}</span>
+    <strong>${{ "{:,.2f}".format(c.total) }}</strong>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

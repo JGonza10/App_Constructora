@@ -18,6 +18,7 @@
         {% if current_user.rol == "admin" %}
         <td>
           <form method="post" action="{{ url_for('usuarios.toggle_estado', usuario_id=u.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="btn btn-sm btn-outline-secondary">{{ "Desactivar" if u.activo else "Activar" }}</button>
           </form>
         </td>
